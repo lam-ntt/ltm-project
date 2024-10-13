@@ -9,5 +9,6 @@ package controller;
  * @author nguye
  */
 public class GroupHandler {
-    
+    public ClientHandler clientHandler1;
+    public ClientHandler clientHandler2;
 }

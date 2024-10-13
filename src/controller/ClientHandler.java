@@ -9,27 +9,29 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import model.User;
 
 /**
  *
  * @author nguye
  */
-public class Handler implements Runnable{
-    public static ArrayList<Handler> clientHandlers = new ArrayList<>();
+public class ClientHandler implements Runnable{
+    public static ArrayList<ClientHandler> clientHandlers = new ArrayList<>();
+    public static ArrayList<GroupHandler> groupHandlers = new ArrayList<>();
     private Socket socket;
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
-    private String clientUsername;
+    private User clientUser;
     
-    public Handler (Socket socket) {
+    public ClientHandler (Socket socket) {
         try {
             this.socket = socket;
             this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
-            this.clientUsername = (String) objectInputStream.readObject();
+            this.clientUser = (User) objectInputStream.readObject();
             
             clientHandlers.add(this);
-            broadcastMessage("SERVER: " + clientUsername + " has entered the chat!");
+            broadcastMessage("SERVER: " + clientUser.getUsername() + " has entered the chat!");
             
         } catch(Exception e) {
             closeEverything(socket, objectInputStream, objectOutputStream);
@@ -38,7 +40,7 @@ public class Handler implements Runnable{
     }
 
     public String getClientUsername() {
-        return clientUsername;
+        return clientUser.getUsername();
     }
 
     @Override
@@ -57,9 +59,9 @@ public class Handler implements Runnable{
     }
     
     public void broadcastMessage(String messageToSend) {
-        for(Handler clientHandler: clientHandlers) {
+        for(ClientHandler clientHandler: clientHandlers) {
             try {
-                if(!clientHandler.clientUsername.equals(this.clientUsername)) {
+                if(!clientHandler.clientUser.getUsername().equals(this.clientUser.getUsername())) {
                     clientHandler.objectOutputStream.writeObject(messageToSend);
                 }
             } catch (IOException e) {
@@ -71,7 +73,7 @@ public class Handler implements Runnable{
     
     public void removeClientHandler() {
         clientHandlers.remove(this);
-        broadcastMessage("SERVER: " + clientUsername + " has left the chat!");
+        broadcastMessage("SERVER: " + clientUser.getUsername() + " has left the chat!");
     }
     
     public void closeEverything(Socket socket, ObjectInputStream objectInputStream, ObjectOutputStream objectOutputStream) {

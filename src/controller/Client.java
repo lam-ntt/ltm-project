@@ -9,6 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Scanner;
+import model.User;
 
 /**
  *
@@ -18,15 +19,15 @@ public class Client {
     private Socket socket;
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
-    private String username;
+    private User user;
     
     
-    public Client(Socket socket, String username) {
+    public Client(Socket socket, User user) {
         try {
             this.socket = socket;
             this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
-            this.username = username;
+            this.user = user;
         } catch(Exception e) {
             closeEverything(socket, objectInputStream, objectOutputStream);
             e.printStackTrace();
@@ -35,12 +36,12 @@ public class Client {
     
     public void sendMessage() {
         try {
-            objectOutputStream.writeObject(username);
+            objectOutputStream.writeObject(user);
             
             Scanner scanner = new Scanner(System.in);
             while(socket.isConnected()) {
                 String messagetoSend = scanner.nextLine();
-                objectOutputStream.writeObject(username + ": " + messagetoSend);
+                objectOutputStream.writeObject(user.getUsername() + ": " + messagetoSend);
             }
             
         } catch(Exception e) {
@@ -92,7 +93,7 @@ public class Client {
         
         Socket socket = new Socket("localhost", 1234);
         
-        Client client = new Client(socket, username);
+        Client client = new Client(socket, new User(username, "123", 0, 0, 0));
         client.listenForMessage();
         client.sendMessage();
     }

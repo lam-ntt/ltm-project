@@ -25,7 +25,7 @@ public class Server {
                 Socket socket = serverSocket.accept();
                 System.out.println("A new client is connected!");
 
-                Handler clientHandler = new Handler(socket);
+                ClientHandler clientHandler = new ClientHandler(socket);
                 Thread thread = new Thread(clientHandler);
                 thread.start();
             }
@@ -50,5 +50,4 @@ public class Server {
         Server server = new Server(serverSocket);
         server.startServer();
     }
-        
 }

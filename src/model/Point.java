@@ -4,11 +4,13 @@
  */
 package model;
 
+import java.io.Serializable;
+
 /**
  *
  * @author nguye
  */
-public class Point {
+public class Point implements Serializable {
     private int id, x, y;
     private Pair pair;
 

@@ -4,11 +4,13 @@
  */
 package model;
 
+import java.io.Serializable;
+
 /**
  *
  * @author nguye
  */
-public class Pair {
+public class Pair implements Serializable {
     private int id;
     private String image1, image2;
 

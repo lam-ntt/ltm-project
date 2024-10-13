@@ -4,11 +4,13 @@
  */
 package model;
 
+import java.io.Serializable;
+
 /**
  *
  * @author nguye
  */
-public class Click {
+public class Click implements Serializable {
     private int id, x, y;
     private User user;
     private Game game;
