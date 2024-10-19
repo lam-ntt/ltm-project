@@ -8,10 +8,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-/**
- *
- * @author nguye
- */
 public class Server {
     private ServerSocket serverSocket;
 
@@ -26,6 +22,8 @@ public class Server {
                 System.out.println("A new client is connected!");
 
                 ClientHandler clientHandler = new ClientHandler(socket);
+                System.out.println(clientHandler.getClientUsername());
+                
                 Thread thread = new Thread(clientHandler);
                 thread.start();
             }

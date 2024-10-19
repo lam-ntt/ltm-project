@@ -8,10 +8,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-/**
- *
- * @author nguye
- */
 public class Connectionn {
     
     public static Connection getConnection() {

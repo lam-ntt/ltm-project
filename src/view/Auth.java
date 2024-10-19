@@ -4,11 +4,33 @@
  */
 package view;
 
+import controller.Client;
+import java.awt.CardLayout;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.net.Socket;
+import javax.swing.JOptionPane;
+import model.User;
+import model.UserDao;
+
 
 public class Auth extends javax.swing.JFrame {
+    Client client;
 
     public Auth() {
+        client = null;
         initComponents();
+        setLocationRelativeTo(null);
+        
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if(client != null) {
+                    client.closeEverything();
+                }
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")
@@ -41,11 +63,21 @@ public class Auth extends javax.swing.JFrame {
         passwordRegisterLabel.setText("Password");
 
         registerButton.setText("Register");
+        registerButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                registerButtonActionPerformed(evt);
+            }
+        });
 
         registerLabel.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         registerLabel.setText("REGISTER A NEW ACCOUNT");
 
         loginButton2.setText("Login");
+        loginButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                loginButton2ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout registerPanelLayout = new javax.swing.GroupLayout(registerPanel);
         registerPanel.setLayout(registerPanelLayout);
@@ -95,6 +127,11 @@ public class Auth extends javax.swing.JFrame {
         getContentPane().add(registerPanel, "card2");
 
         registerButton2.setText("Register");
+        registerButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                registerButton2ActionPerformed(evt);
+            }
+        });
 
         loginLabel.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         loginLabel.setText("LOGIN TO JOIN WITH US");
@@ -104,6 +141,11 @@ public class Auth extends javax.swing.JFrame {
         passwordLoginLabel.setText("Password");
 
         loginButton.setText("Login");
+        loginButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                loginButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout loginPanelLayout = new javax.swing.GroupLayout(loginPanel);
         loginPanel.setLayout(loginPanelLayout);
@@ -154,6 +196,105 @@ public class Auth extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void registerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_registerButtonActionPerformed
+        String username = usernameRegisterTextField.getText();
+        String password = passwordRegisterTextField.getText();
+        
+        if(username.equals("") || password.equals("")) {
+            JOptionPane.showMessageDialog(
+                null, 
+                "You must enter username and password!", 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE
+            );
+        } else {
+            if(UserDao.getUserByName(username) != null) {
+                JOptionPane.showMessageDialog(
+                    null, 
+                    "This username was selected. Please choose another! ", 
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE
+                );
+            } else {
+                User user = new User(username, password);
+                boolean isUserCreated = UserDao.createUser(user);
+                if(isUserCreated) {
+                    JOptionPane.showMessageDialog(
+                        null, 
+                        "Your account created successfully. Now, you able to login! ", 
+                        "Message", 
+                        JOptionPane.INFORMATION_MESSAGE
+                    );
+                    
+                    usernameRegisterTextField.setText("");
+                    passwordRegisterTextField.setText("");
+                } else {
+                    JOptionPane.showMessageDialog(
+                        null, 
+                        "Fail to create your account. Please try again! ", 
+                        "Error", 
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            }
+        }
+    }//GEN-LAST:event_registerButtonActionPerformed
+
+    private void loginButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginButton2ActionPerformed
+        CardLayout cartLayout = (CardLayout) this.getContentPane().getLayout();
+        cartLayout.next(this.getContentPane());
+    }//GEN-LAST:event_loginButton2ActionPerformed
+
+    private void registerButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_registerButton2ActionPerformed
+        CardLayout cartLayout = (CardLayout) this.getContentPane().getLayout();
+        cartLayout.next(this.getContentPane());
+    }//GEN-LAST:event_registerButton2ActionPerformed
+
+    private void loginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginButtonActionPerformed
+        String username = usernameLoginTextField.getText();
+        String password = passwordLoginTextField.getText();
+        
+        if(username.equals("") || password.equals("")) {
+            JOptionPane.showMessageDialog(
+                null, 
+                "You must enter username and password!", 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE
+            );
+        } else {
+            User user = UserDao.getUserByName(username);
+            if(user != null) {
+                if(user.getPassword().equals(password)) {
+                    usernameLoginTextField.setText("");
+                    passwordLoginTextField.setText("");
+                    
+                    try {
+                        client = new Client(new Socket("localhost", 1234), user);
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                    
+                    this.dispose();
+                    new Home(client).setVisible(true);
+                } else {
+                    JOptionPane.showMessageDialog(
+                        null, 
+                        "This password is wrong! ", 
+                        "Error", 
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            } else {
+                JOptionPane.showMessageDialog(
+                    null, 
+                    "This username is not existed! ", 
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE
+                );
+            }
+        }
+    }//GEN-LAST:event_loginButtonActionPerformed
 
     public static void main(String args[]) {
         

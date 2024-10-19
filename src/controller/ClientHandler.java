@@ -11,10 +11,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import model.User;
 
-/**
- *
- * @author nguye
- */
 public class ClientHandler implements Runnable{
     public static ArrayList<ClientHandler> clientHandlers = new ArrayList<>();
     public static ArrayList<GroupHandler> groupHandlers = new ArrayList<>();
@@ -22,6 +18,7 @@ public class ClientHandler implements Runnable{
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
     private User clientUser;
+    private Thread thread;
     
     public ClientHandler (Socket socket) {
         try {
@@ -29,12 +26,13 @@ public class ClientHandler implements Runnable{
             this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
             this.clientUser = (User) objectInputStream.readObject();
-            
             clientHandlers.add(this);
-            broadcastMessage("SERVER: " + clientUser.getUsername() + " has entered the chat!");
             
-        } catch(Exception e) {
-            closeEverything(socket, objectInputStream, objectOutputStream);
+//            thread = new Thread(this);
+//            thread.start();
+            
+        } catch(IOException | ClassNotFoundException e) {
+            closeEverything();
             e.printStackTrace();
         }
     }
@@ -46,15 +44,19 @@ public class ClientHandler implements Runnable{
     @Override
     public void run() {
         String messageFromClient;
-        while(socket.isConnected()) {
-            try {
-                messageFromClient = (String) objectInputStream.readObject();
-                broadcastMessage(messageFromClient);
-            } catch(Exception e) {
-                closeEverything(socket, objectInputStream, objectOutputStream);
-                e.printStackTrace();
-                break;
+        try {
+            while(true) {
+                if(socket.isConnected()) {
+                    messageFromClient = (String) objectInputStream.readObject();
+                    if(messageFromClient.equals("Close")) {
+                        closeEverything();
+                        break;
+                    }
+                }
             }
+        } catch(IOException | ClassNotFoundException e) {
+            closeEverything();
+            e.printStackTrace();
         }
     }
     
@@ -65,7 +67,7 @@ public class ClientHandler implements Runnable{
                     clientHandler.objectOutputStream.writeObject(messageToSend);
                 }
             } catch (IOException e) {
-                closeEverything(socket, objectInputStream, objectOutputStream);
+                closeEverything();
                 e.printStackTrace();
             }
         }
@@ -73,23 +75,15 @@ public class ClientHandler implements Runnable{
     
     public void removeClientHandler() {
         clientHandlers.remove(this);
-        broadcastMessage("SERVER: " + clientUser.getUsername() + " has left the chat!");
     }
     
-    public void closeEverything(Socket socket, ObjectInputStream objectInputStream, ObjectOutputStream objectOutputStream) {
-        removeClientHandler();
+    public void closeEverything() {
         try {
-            if(objectInputStream != null) {
-                objectInputStream.close();
-            }
+            removeClientHandler();
+            if(objectInputStream != null) objectInputStream.close();
+            if(objectOutputStream != null) objectOutputStream.close();
+            if(socket != null) socket.close();
             
-            if(objectOutputStream != null) {
-                objectOutputStream.close();
-            }
-            
-            if(socket != null) {
-                socket.close();
-            }
         } catch(IOException e) {
             e.printStackTrace();
         }

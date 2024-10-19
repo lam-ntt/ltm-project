@@ -6,10 +6,6 @@ package model;
 
 import java.io.Serializable;
 
-/**
- *
- * @author nguye
- */
 public class Game implements Serializable {
     private int id;
     private User user1, user2;
@@ -18,25 +14,6 @@ public class Game implements Serializable {
     private String stateString;
 
     public Game() {
-    }
-
-    public Game(User user1, User user2, Pair pair, int score1, int score2, String stateString) {
-        this.user1 = user1;
-        this.user2 = user2;
-        this.pair = pair;
-        this.score1 = score1;
-        this.score2 = score2;
-        this.stateString = stateString;
-    }
-
-    public Game(int id, User user1, User user2, Pair pair, int score1, int score2, String stateString) {
-        this.id = id;
-        this.user1 = user1;
-        this.user2 = user2;
-        this.pair = pair;
-        this.score1 = score1;
-        this.score2 = score2;
-        this.stateString = stateString;
     }
 
     public int getId() {

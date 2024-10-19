@@ -11,10 +11,6 @@ import java.net.Socket;
 import java.util.Scanner;
 import model.User;
 
-/**
- *
- * @author nguye
- */
 public class Client {
     private Socket socket;
     private ObjectInputStream objectInputStream;
@@ -28,59 +24,62 @@ public class Client {
             this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
             this.user = user;
-        } catch(Exception e) {
-            closeEverything(socket, objectInputStream, objectOutputStream);
+            objectOutputStream.writeObject(user);
+            
+        } catch(IOException e) {
+            closeEverything();
             e.printStackTrace();
         }
     }
     
-    public void sendMessage() {
+    public void sendMessage(String message) {
+        // Send message should be implemented in Frame
+        // This is just for test
         try {
-            objectOutputStream.writeObject(user);
-            
-            Scanner scanner = new Scanner(System.in);
-            while(socket.isConnected()) {
-                String messagetoSend = scanner.nextLine();
-                objectOutputStream.writeObject(user.getUsername() + ": " + messagetoSend);
+            while(true) {
+                if(socket.isConnected()) {
+                    objectOutputStream.writeObject(message);
+                    break;
+                }
             }
             
-        } catch(Exception e) {
-            closeEverything(socket, objectInputStream, objectOutputStream);
+        } catch(IOException e) {
+            closeEverything();
             e.printStackTrace();
         }
     }
     
     public void listenForMessage() {
+        // Listen to message should be implemented in Frame
+        // This is just for test
         new Thread(new Runnable() {
             @Override
             public void run() {
-                String msgFromGroupChat;
-                while(socket.isConnected()) {
-                    try {
-                        msgFromGroupChat = (String) objectInputStream.readObject();
-                        System.out.println(msgFromGroupChat);
-                    } catch(Exception e) {
-                        closeEverything(socket, objectInputStream, objectOutputStream);
-                        e.printStackTrace();
+                String message;
+                try {
+                    while(true) {
+                        if(socket.isConnected()) {
+                            message = (String) objectInputStream.readObject();
+                            break;
+                        }
                     }
+                } catch(IOException | ClassNotFoundException e) {
+                    closeEverything();
+                    e.printStackTrace();
                 }
             }
         }).start();
     }
     
-    public void closeEverything(Socket socket, ObjectInputStream objectInputStream, ObjectOutputStream objectOutputStream) {
+    public void closeEverything() {
         try {
-            if(objectInputStream != null) {
-                objectInputStream.close();
-            }
+            String message = "Close";
+            objectOutputStream.writeObject(message);
             
-            if(objectOutputStream != null) {
-                objectOutputStream.close();
-            }
+            if(objectInputStream != null) objectInputStream.close();
+            if(objectOutputStream != null) objectOutputStream.close();
+            if(socket != null) socket.close();
             
-            if(socket != null) {
-                socket.close();
-            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -93,8 +92,8 @@ public class Client {
         
         Socket socket = new Socket("localhost", 1234);
         
-        Client client = new Client(socket, new User(username, "123", 0, 0, 0));
-        client.listenForMessage();
-        client.sendMessage();
+//        Client client = new Client(socket, new User(username, "123", 0, 0, 0));
+//        client.listenForMessage();
+//        client.sendMessage();
     }
 }

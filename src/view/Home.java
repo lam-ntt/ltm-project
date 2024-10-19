@@ -4,13 +4,28 @@
  */
 package view;
 
+import controller.Client;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import javax.swing.SwingConstants;
 
 
 public class Home extends javax.swing.JFrame {
+    Client client;
 
-    public Home() {
+    public Home(Client client) {
+        this.client = client;
         initComponents();
+        setLocationRelativeTo(null);
+        
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if(client != null) {
+                    client.closeEverything();
+                }
+            }
+        });
         
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         leaderBoardLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -234,14 +249,14 @@ public class Home extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    public static void main(String args[]) {
-
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new Home().setVisible(true);
-            }
-        });
-    }
+//    public static void main(String args[]) {
+//
+//        java.awt.EventQueue.invokeLater(new Runnable() {
+//            public void run() {
+//                new Home().setVisible(true);
+//            }
+//        });
+//    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel headerPanel;

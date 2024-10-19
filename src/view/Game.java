@@ -12,6 +12,7 @@ public class Game extends javax.swing.JFrame {
 
     public Game() {
         initComponents();
+        setLocationRelativeTo(null);
         
         ImageIcon originalIcon = new ImageIcon("C:/Users/nguye/Downloads/1.jpg");
         

@@ -6,26 +6,11 @@ package model;
 
 import java.io.Serializable;
 
-/**
- *
- * @author nguye
- */
 public class Pair implements Serializable {
     private int id;
     private String image1, image2;
 
     public Pair() {
-    }
-
-    public Pair(String image1, String image2) {
-        this.image1 = image1;
-        this.image2 = image2;
-    }
-
-    public Pair(int id, String image1, String image2) {
-        this.id = id;
-        this.image1 = image1;
-        this.image2 = image2;
     }
 
     public int getId() {

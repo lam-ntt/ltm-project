@@ -4,10 +4,6 @@
  */
 package model;
 
-/**
- *
- * @author nguye
- */
 public class ClickDao {
     
     public static void main(String[] args) {

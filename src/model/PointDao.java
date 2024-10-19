@@ -4,10 +4,6 @@
  */
 package model;
 
-/**
- *
- * @author nguye
- */
 public class PointDao {
     
     public static void main(String[] args) {

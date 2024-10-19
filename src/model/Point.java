@@ -6,28 +6,11 @@ package model;
 
 import java.io.Serializable;
 
-/**
- *
- * @author nguye
- */
 public class Point implements Serializable {
     private int id, x, y;
     private Pair pair;
 
     public Point() {
-    }
-
-    public Point(int x, int y, Pair pair) {
-        this.x = x;
-        this.y = y;
-        this.pair = pair;
-    }
-
-    public Point(int id, int x, int y, Pair pair) {
-        this.id = id;
-        this.x = x;
-        this.y = y;
-        this.pair = pair;
     }
 
     public int getId() {

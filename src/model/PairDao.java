@@ -4,10 +4,6 @@
  */
 package model;
 
-/**
- *
- * @author nguye
- */
 public class PairDao {
     
     public static void main(String[] args) {

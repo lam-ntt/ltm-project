@@ -10,14 +10,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-/**
- *
- * @author nguye
- */
 public class UserDao {
     
     public static void main(String[] args) {
-        
+        System.out.println(getUserByName("lam"));
+//        createUser(new User("lam", "123", 0, 0, 0));
     }
     
     public static User getUser(int id) {
@@ -25,9 +22,34 @@ public class UserDao {
             Connection con = Connectionn.getConnection();
             Statement statement = con.createStatement();
             
-            String query = "";
+            String query = "SELECT * FROM USER WHERE USERNAME = ";
             ResultSet resultset = statement.executeQuery(query);
             
+            
+        } catch(SQLException ex) {
+            ex.printStackTrace();
+        }
+        
+        return null;
+    }
+    
+    public static User getUserByName(String username) {
+        try {
+            Connection con = Connectionn.getConnection();
+            Statement statement = con.createStatement();
+            
+            String query = "SELECT * FROM USER WHERE USERNAME = '" + username + "'";
+            ResultSet resultset = statement.executeQuery(query);
+                        
+            if(!resultset.next()) {
+                return null;
+            }
+            
+            return new User(
+                    resultset.getInt("id"), 
+                    resultset.getString("username"), 
+                    resultset.getString("password")
+            );
             
         } catch(SQLException ex) {
             ex.printStackTrace();
@@ -51,20 +73,26 @@ public class UserDao {
         
         return null;
     }
+    
+    
+    
 
     
-    public static void createUser(User user) {
+    public static boolean createUser(User user) {
         try {
             Connection con = Connectionn.getConnection();
             Statement statement = con.createStatement();
             
-            String query = "";
+            String query = "INSERT INTO USER(USERNAME, PASSWORD) " + 
+                        "VALUES('" + user.getUsername() + "', '" + user.getPassword() + "')";
             int result = statement.executeUpdate(query);
             
-            
+            return (result > 0);
         } catch(SQLException ex) {
             ex.printStackTrace();
         }
+        
+        return false;
     }
     
     public static void updateUser(User user) {

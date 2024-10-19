@@ -4,10 +4,6 @@
  */
 package model;
 
-/**
- *
- * @author nguye
- */
 public class Config {
     public static String DB_URL = "jdbc:mysql://localhost:3306/ltm";
     public static String DB_USER = "root";
