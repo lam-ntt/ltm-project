@@ -229,6 +229,9 @@ public class Auth extends javax.swing.JFrame {
                     
                     usernameRegisterTextField.setText("");
                     passwordRegisterTextField.setText("");
+                    
+                    CardLayout cartLayout = (CardLayout) this.getContentPane().getLayout();
+                    cartLayout.next(this.getContentPane());
                 } else {
                     JOptionPane.showMessageDialog(
                         null, 
