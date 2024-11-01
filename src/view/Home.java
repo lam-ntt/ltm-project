@@ -5,22 +5,46 @@
 package view;
 
 import controller.Client;
+import controller.ClientHandler;
+import controller.Message;
+import java.awt.FlowLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.net.SocketException;
+import java.util.List;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableModel;
+import model.User;
 
 
 public class Home extends javax.swing.JFrame {
     Client client;
+    User user;
+    Thread thread;
+    private volatile boolean running = true;
+    DefaultTableModel defaultTableModel = new DefaultTableModel();
 
-    public Home(Client client) {
+    public Home(Client client) throws IOException {
         this.client = client;
+        this.user = client.getUser();
+        this.thread = initThread();
+        thread.start();
+        initTable();
+        
         initComponents();
         setLocationRelativeTo(null);
         
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
+                running = false;
                 if(client != null) {
                     client.closeEverything();
                 }
@@ -30,14 +54,227 @@ public class Home extends javax.swing.JFrame {
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         leaderBoardLabel.setHorizontalAlignment(SwingConstants.CENTER);
         onlineUsersLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        
+        usernameLabel.setText("Username: " + this.user.getUsername());
+        winLabel.setText("Win: " + this.user.getWin());
+        loseLabel.setText("Lose: " + this.user.getLose());
+        tieLabel.setText("Tie: " + this.user.getTie());
+        
+        requestGetAllUserInfo();
+        requestGetAllOnlineUser();
+    }
+    
+    public Thread initThread() {
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    while(running) {
+                        if(!client.getSocket().isConnected()) break;
+                        
+                        try {
+                            Message message = (Message) client.getObjectInputStream().readObject();
+                            switch (message.getCode()) {
+                                case "1" -> handleGetAllUserInfoResponse(message);
+                                case "2" -> handleGetAllOnlineUserResponse(message);
+                                case "3" -> handleAddUserToOnlineUserRequest(message);
+                                case "4" -> handleRemoveUserFromOnlineUserRequest(message);
+                                case "6" -> handleReceiveInvitationRequest(message);
+                                case "9" -> handleReceiveAgreementResponse(message);
+                                case "10" -> handleReceiveRejectionResponse(message);
+                                case "11" -> handleReceiveBusyNotiResponse(message);
+                                default -> {
+                                }
+                            }
+                        } catch (SocketException e) {
+                            break;
+                        }
+                    }
+                } catch(IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+    
+    private void initTable() {
+        this.defaultTableModel = new DefaultTableModel();
+        
+        defaultTableModel.addColumn("USER");
+        defaultTableModel.addColumn("WIN");
+        defaultTableModel.addColumn("TIE");
+        defaultTableModel.addColumn("LOSE");
+    }
+    
+    private void updateTable(List<User> users) {
+        leaderBoardTable.setModel(defaultTableModel);
+        
+        for(User user: users) {
+            defaultTableModel.addRow(new Object[] {
+                user.getUsername(),
+                user.getWin(),
+                user.getTie(),
+                user.getLose()
+            });
+        }
+    }
+    
+    private void updateList(List<User> users) {
+        jPanel5.setLayout(new FlowLayout());
+        
+        for(User user: users) {
+            if(!user.getUsername().equals(this.user.getUsername())) {
+                JLabel label = createLabel(user);
+                jPanel5.add(label);
+            }
+        }
+        
+        jPanel5.revalidate();
+    }
+    
+    private JLabel createLabel(User user) {
+        JLabel label = new JLabel(user.getUsername(), SwingConstants.CENTER);
+        label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                    requestInviteUser(user);
+                }
+            }
+        });
+        
+        return label;
+    }
+    
+    private JLabel findLabel(User user, JPanel panel) {
+        for (int i = 0; i < panel.getComponentCount(); i++) {
+            if (panel.getComponent(i) instanceof JLabel) {
+                JLabel label = (JLabel) panel.getComponent(i);
+                if (label.getText().equals(user.getUsername())) {
+                    return label;
+                }
+            }
+        }
+        return null;
+    }
+    
+    
+    
+    private void requestGetAllUserInfo() {
+        client.sendMessage(new Message("1"));
+    }
+    
+    private void requestGetAllOnlineUser() {
+        client.sendMessage(new Message("2"));
+    }
+    
+    private void handleGetAllUserInfoResponse(Message message) {
+        List<User> users = (List<User>) message.getObject();
+        updateTable(users);
+    }
+    
+    private void handleGetAllOnlineUserResponse(Message message) {
+        List<User> users = (List<User>) message.getObject();
+        updateList(users);
+    }
+    
+    
+    private void handleAddUserToOnlineUserRequest(Message message) {
+        User user = (User) message.getObject();
+        SwingUtilities.invokeLater(() -> {
+            JLabel label = createLabel(user);
+            jPanel5.add(label);
+            jPanel5.revalidate();
+        });
+    }
+    
+    private void requestRemoveUser() {
+        client.sendMessage(new Message("4"));
+    }
+    
+    private void handleRemoveUserFromOnlineUserRequest(Message message) {
+        User user = (User) message.getObject();
+        SwingUtilities.invokeLater(() -> {
+            JLabel label = findLabel(user, jPanel5);
+            jPanel5.remove(label);
+            jPanel5.revalidate();
+        });
+}
+    
+    
+    private void requestInviteUser(User user) {
+        client.sendMessage(new Message("5", user));
+        JOptionPane.showMessageDialog(
+            mainPanel, 
+            "Sending your invitation to " + user.getUsername(), 
+            "Notification", 
+            JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+    
+    private void handleReceiveInvitationRequest(Message message) {
+        User sender = (User) message.getObject();
+        int response = JOptionPane.showConfirmDialog(
+            mainPanel, 
+            sender.getUsername() + " invites you to join a game!", 
+            "Confirmation", 
+            JOptionPane.YES_NO_OPTION
+        );
+
+        if(response == JOptionPane.YES_OPTION) {
+            client.sendMessage(new Message("7", sender));
+            
+            this.dispose();
+            new Game(client, sender).setVisible(running);
+        }
+        else client.sendMessage(new Message("8", sender));
+    }
+    
+    private void handleReceiveAgreementResponse(Message message) {
+        User sender = (User) message.getObject();
+        
+        JOptionPane.showMessageDialog(
+            mainPanel, 
+            sender.getUsername() + " agrees join your game!", 
+            "Confirmation", 
+            JOptionPane.INFORMATION_MESSAGE
+        );
+        
+        this.dispose();
+        new Game(client, sender).setVisible(true);
+    } 
+    
+    private void handleReceiveRejectionResponse(Message message) {
+        User sender = (User) message.getObject();
+        
+        JOptionPane.showMessageDialog(
+            mainPanel, 
+            sender.getUsername() + " rejects your invitation!", 
+            "Confirmation", 
+            JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+    
+    private void handleReceiveBusyNotiResponse(Message message) {
+        User sender = (User) message.getObject();
+        
+        JOptionPane.showMessageDialog(
+            mainPanel, 
+            sender.getUsername() + " is on another game!", 
+            "Confirmation", 
+            JOptionPane.INFORMATION_MESSAGE
+        );
     }
 
+    
+    
+    
+    
+    
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPopupMenu1 = new javax.swing.JPopupMenu();
-        jMenuItem1 = new javax.swing.JMenuItem();
         headerPanel = new javax.swing.JPanel();
         titleLabel = new javax.swing.JLabel();
         logoutButton = new javax.swing.JButton();
@@ -48,15 +285,11 @@ public class Home extends javax.swing.JFrame {
         jPanel4 = new javax.swing.JPanel();
         onlineUsersLabel = new javax.swing.JLabel();
         jPanel5 = new javax.swing.JPanel();
-        onlineUserLabel = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         usernameLabel = new javax.swing.JLabel();
         winLabel = new javax.swing.JLabel();
         loseLabel = new javax.swing.JLabel();
         tieLabel = new javax.swing.JLabel();
-
-        jMenuItem1.setText("Invite");
-        jPopupMenu1.add(jMenuItem1);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
@@ -65,6 +298,11 @@ public class Home extends javax.swing.JFrame {
         titleLabel.setText("Spot the Difference");
 
         logoutButton.setText("Logout");
+        logoutButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                logoutButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout headerPanelLayout = new javax.swing.GroupLayout(headerPanel);
         headerPanel.setLayout(headerPanelLayout);
@@ -112,26 +350,18 @@ public class Home extends javax.swing.JFrame {
         ));
         jScrollPane1.setViewportView(leaderBoardTable);
 
-        onlineUsersLabel.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        onlineUsersLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         onlineUsersLabel.setText("Online Users (double-click on the username to invite them to the game)");
-
-        onlineUserLabel.setText("jLabel9");
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addGap(328, 328, 328)
-                .addComponent(onlineUserLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGap(0, 0, Short.MAX_VALUE)
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(onlineUserLabel)
-                .addContainerGap(61, Short.MAX_VALUE))
+            .addGap(0, 83, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
@@ -141,8 +371,8 @@ public class Home extends javax.swing.JFrame {
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(onlineUsersLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(onlineUsersLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 699, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -150,9 +380,9 @@ public class Home extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(onlineUsersLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout mainPanelLayout = new javax.swing.GroupLayout(mainPanel);
@@ -249,29 +479,25 @@ public class Home extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-//    public static void main(String args[]) {
-//
-//        java.awt.EventQueue.invokeLater(new Runnable() {
-//            public void run() {
-//                new Home().setVisible(true);
-//            }
-//        });
-//    }
+    private void logoutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logoutButtonActionPerformed
+        requestRemoveUser();
+        client.closeEverything();
+        
+        this.dispose();
+        new Auth().setVisible(true);
+    }//GEN-LAST:event_logoutButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel headerPanel;
-    private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
-    private javax.swing.JPopupMenu jPopupMenu1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel leaderBoardLabel;
     private javax.swing.JTable leaderBoardTable;
     private javax.swing.JButton logoutButton;
     private javax.swing.JLabel loseLabel;
     private javax.swing.JPanel mainPanel;
-    private javax.swing.JLabel onlineUserLabel;
     private javax.swing.JLabel onlineUsersLabel;
     private javax.swing.JLabel tieLabel;
     private javax.swing.JLabel titleLabel;

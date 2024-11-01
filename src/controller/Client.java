@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.Scanner;
 import model.User;
 
 public class Client {
@@ -31,10 +30,22 @@ public class Client {
             e.printStackTrace();
         }
     }
+
+    public User getUser() {
+        return user;
+    }
+
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public ObjectInputStream getObjectInputStream() {
+        return objectInputStream;
+    }
     
-    public void sendMessage(String message) {
-        // Send message should be implemented in Frame
-        // This is just for test
+    
+    
+    public void sendMessage(Message message) {
         try {
             while(true) {
                 if(socket.isConnected()) {
@@ -49,32 +60,9 @@ public class Client {
         }
     }
     
-    public void listenForMessage() {
-        // Listen to message should be implemented in Frame
-        // This is just for test
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String message;
-                try {
-                    while(true) {
-                        if(socket.isConnected()) {
-                            message = (String) objectInputStream.readObject();
-                            break;
-                        }
-                    }
-                } catch(IOException | ClassNotFoundException e) {
-                    closeEverything();
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }
-    
     public void closeEverything() {
         try {
-            String message = "Close";
-            objectOutputStream.writeObject(message);
+            sendMessage(new Message("0"));
             
             if(objectInputStream != null) objectInputStream.close();
             if(objectOutputStream != null) objectOutputStream.close();
@@ -86,12 +74,7 @@ public class Client {
     }
     
     public static void main(String[] args) throws IOException {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Enter your username for the group chat: ");
-        String username = scanner.nextLine();
-        
         Socket socket = new Socket("localhost", 1234);
-        
 //        Client client = new Client(socket, new User(username, "123", 0, 0, 0));
 //        client.listenForMessage();
 //        client.sendMessage();

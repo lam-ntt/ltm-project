@@ -27,7 +27,6 @@ public class Server {
                 Thread thread = new Thread(clientHandler);
                 thread.start();
             }
-            
         } catch(Exception e) {
             e.printStackTrace();
         }

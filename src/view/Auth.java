@@ -37,14 +37,6 @@ public class Auth extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        registerPanel = new javax.swing.JPanel();
-        usernameRegisterLabel = new javax.swing.JLabel();
-        usernameRegisterTextField = new javax.swing.JTextField();
-        passwordRegisterLabel = new javax.swing.JLabel();
-        passwordRegisterTextField = new javax.swing.JTextField();
-        registerButton = new javax.swing.JButton();
-        registerLabel = new javax.swing.JLabel();
-        loginButton2 = new javax.swing.JButton();
         loginPanel = new javax.swing.JPanel();
         registerButton2 = new javax.swing.JButton();
         loginLabel = new javax.swing.JLabel();
@@ -53,78 +45,18 @@ public class Auth extends javax.swing.JFrame {
         passwordLoginTextField = new javax.swing.JTextField();
         passwordLoginLabel = new javax.swing.JLabel();
         loginButton = new javax.swing.JButton();
+        registerPanel = new javax.swing.JPanel();
+        usernameRegisterLabel = new javax.swing.JLabel();
+        usernameRegisterTextField = new javax.swing.JTextField();
+        passwordRegisterLabel = new javax.swing.JLabel();
+        passwordRegisterTextField = new javax.swing.JTextField();
+        registerButton = new javax.swing.JButton();
+        registerLabel = new javax.swing.JLabel();
+        loginButton2 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
         getContentPane().setLayout(new java.awt.CardLayout());
-
-        usernameRegisterLabel.setText("Username");
-
-        passwordRegisterLabel.setText("Password");
-
-        registerButton.setText("Register");
-        registerButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                registerButtonActionPerformed(evt);
-            }
-        });
-
-        registerLabel.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        registerLabel.setText("REGISTER A NEW ACCOUNT");
-
-        loginButton2.setText("Login");
-        loginButton2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                loginButton2ActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout registerPanelLayout = new javax.swing.GroupLayout(registerPanel);
-        registerPanel.setLayout(registerPanelLayout);
-        registerPanelLayout.setHorizontalGroup(
-            registerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(registerPanelLayout.createSequentialGroup()
-                .addGap(0, 82, Short.MAX_VALUE)
-                .addGroup(registerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, registerPanelLayout.createSequentialGroup()
-                        .addComponent(loginButton2)
-                        .addContainerGap())
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, registerPanelLayout.createSequentialGroup()
-                        .addGroup(registerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(usernameRegisterLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(passwordRegisterLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(18, 18, 18)
-                        .addGroup(registerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(passwordRegisterTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 174, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(usernameRegisterTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 174, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(registerButton))
-                        .addGap(65, 65, 65))))
-            .addGroup(registerPanelLayout.createSequentialGroup()
-                .addGap(94, 94, 94)
-                .addComponent(registerLabel)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        registerPanelLayout.setVerticalGroup(
-            registerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(registerPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(loginButton2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 50, Short.MAX_VALUE)
-                .addComponent(registerLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addGroup(registerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(usernameRegisterTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(usernameRegisterLabel))
-                .addGap(19, 19, 19)
-                .addGroup(registerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(passwordRegisterTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(passwordRegisterLabel))
-                .addGap(18, 18, 18)
-                .addComponent(registerButton)
-                .addGap(75, 75, 75))
-        );
-
-        getContentPane().add(registerPanel, "card2");
 
         registerButton2.setText("Register");
         registerButton2.addActionListener(new java.awt.event.ActionListener() {
@@ -193,6 +125,74 @@ public class Auth extends javax.swing.JFrame {
         );
 
         getContentPane().add(loginPanel, "card3");
+
+        usernameRegisterLabel.setText("Username");
+
+        passwordRegisterLabel.setText("Password");
+
+        registerButton.setText("Register");
+        registerButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                registerButtonActionPerformed(evt);
+            }
+        });
+
+        registerLabel.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        registerLabel.setText("REGISTER A NEW ACCOUNT");
+
+        loginButton2.setText("Login");
+        loginButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                loginButton2ActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout registerPanelLayout = new javax.swing.GroupLayout(registerPanel);
+        registerPanel.setLayout(registerPanelLayout);
+        registerPanelLayout.setHorizontalGroup(
+            registerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(registerPanelLayout.createSequentialGroup()
+                .addGap(0, 82, Short.MAX_VALUE)
+                .addGroup(registerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, registerPanelLayout.createSequentialGroup()
+                        .addComponent(loginButton2)
+                        .addContainerGap())
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, registerPanelLayout.createSequentialGroup()
+                        .addGroup(registerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(usernameRegisterLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(passwordRegisterLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(18, 18, 18)
+                        .addGroup(registerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(passwordRegisterTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 174, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(usernameRegisterTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 174, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(registerButton))
+                        .addGap(65, 65, 65))))
+            .addGroup(registerPanelLayout.createSequentialGroup()
+                .addGap(94, 94, 94)
+                .addComponent(registerLabel)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        registerPanelLayout.setVerticalGroup(
+            registerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(registerPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(loginButton2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 50, Short.MAX_VALUE)
+                .addComponent(registerLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addGroup(registerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(usernameRegisterTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(usernameRegisterLabel))
+                .addGap(19, 19, 19)
+                .addGroup(registerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(passwordRegisterTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(passwordRegisterLabel))
+                .addGap(18, 18, 18)
+                .addComponent(registerButton)
+                .addGap(75, 75, 75))
+        );
+
+        getContentPane().add(registerPanel, "card2");
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -274,12 +274,11 @@ public class Auth extends javax.swing.JFrame {
                     
                     try {
                         client = new Client(new Socket("localhost", 1234), user);
+                        this.dispose();
+                        new Home(client).setVisible(true);
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }
-                    
-                    this.dispose();
-                    new Home(client).setVisible(true);
                 } else {
                     JOptionPane.showMessageDialog(
                         null, 

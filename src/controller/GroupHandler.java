@@ -4,7 +4,15 @@
  */
 package controller;
 
+/**
+ *
+ * @author nguye
+ */
 public class GroupHandler {
-    public ClientHandler clientHandler1;
-    public ClientHandler clientHandler2;
+    public ClientHandler clientHandler1, clientHandler2;
+
+    public GroupHandler(ClientHandler clientHandler1, ClientHandler clientHandler2) {
+        this.clientHandler1 = clientHandler1;
+        this.clientHandler2 = clientHandler2;
+    }
 }

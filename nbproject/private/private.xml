@@ -2,6 +2,14 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group/>
+        <group>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/model/UserDao.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/view/Auth.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/view/Game.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/controller/Client.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/view/Home.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/controller/ClientHandler.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/model/User.java</file>
+        </group>
     </open-files>
 </project-private>

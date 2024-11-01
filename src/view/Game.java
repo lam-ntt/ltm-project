@@ -4,13 +4,15 @@
  */
 package view;
 
+import controller.Client;
 import javax.swing.*;
 import java.awt.*;
+import model.User;
 
 
 public class Game extends javax.swing.JFrame {
 
-    public Game() {
+    public Game(Client client, User parner) {
         initComponents();
         setLocationRelativeTo(null);
         
@@ -205,18 +207,8 @@ public class Game extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void image1LabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_image1LabelMouseClicked
-       
         System.out.println(evt.getX() + " " + evt.getY());
     }//GEN-LAST:event_image1LabelMouseClicked
-
-    public static void main(String args[]) {
-
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new Game().setVisible(true);
-            }
-        });
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel clockLabel;

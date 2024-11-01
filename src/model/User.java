@@ -25,6 +25,15 @@ public class User implements Serializable{
         this.password = password;
     }
 
+    public User(int id, String username, String password, int win, int tie, int lose) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.win = win;
+        this.tie = tie;
+        this.lose = lose;
+    }
+
     public int getId() {
         return id;
     }
