@@ -11,7 +11,17 @@ public class Game implements Serializable {
     private User user1, user2;
     private Pair pair;
     private int score1, score2;
-    private String stateString;
+    private String state;
+
+    public Game(int id, User user1, User user2, Pair pair, int score1, int score2, String state) {
+        this.id = id;
+        this.user1 = user1;
+        this.user2 = user2;
+        this.pair = pair;
+        this.score1 = score1;
+        this.score2 = score2;
+        this.state = state;
+    }
 
     public Game() {
     }
@@ -40,8 +50,8 @@ public class Game implements Serializable {
         return score2;
     }
 
-    public String getStateString() {
-        return stateString;
+    public String getState() {
+        return state;
     }
 
     public void setId(int id) {
@@ -68,7 +78,7 @@ public class Game implements Serializable {
         this.score2 = score2;
     }
 
-    public void setStateString(String stateString) {
-        this.stateString = stateString;
+    public void setState(String state) {
+        this.state = state;
     }
 }

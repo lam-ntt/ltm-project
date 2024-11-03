@@ -19,9 +19,11 @@ public class Auth extends javax.swing.JFrame {
     Client client;
 
     public Auth() {
-        client = null;
         initComponents();
         setLocationRelativeTo(null);
+        
+        
+        client = null;
         
         addWindowListener(new WindowAdapter() {
             @Override

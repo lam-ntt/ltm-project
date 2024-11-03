@@ -5,7 +5,6 @@
 package view;
 
 import controller.Client;
-import controller.ClientHandler;
 import controller.Message;
 import java.awt.FlowLayout;
 import java.awt.event.MouseAdapter;
@@ -25,21 +24,21 @@ import model.User;
 
 
 public class Home extends javax.swing.JFrame {
-    Client client;
-    User user;
-    Thread thread;
+    private Client client;
+    private User user;
+    private Thread thread;
     private volatile boolean running = true;
-    DefaultTableModel defaultTableModel = new DefaultTableModel();
+    private DefaultTableModel defaultTableModel;
 
     public Home(Client client) throws IOException {
+        initComponents();
+        setLocationRelativeTo(null);
+        
         this.client = client;
         this.user = client.getUser();
         this.thread = initThread();
         thread.start();
         initTable();
-        
-        initComponents();
-        setLocationRelativeTo(null);
         
         addWindowListener(new WindowAdapter() {
             @Override
@@ -99,7 +98,6 @@ public class Home extends javax.swing.JFrame {
     
     private void initTable() {
         this.defaultTableModel = new DefaultTableModel();
-        
         defaultTableModel.addColumn("USER");
         defaultTableModel.addColumn("WIN");
         defaultTableModel.addColumn("TIE");
@@ -108,7 +106,6 @@ public class Home extends javax.swing.JFrame {
     
     private void updateTable(List<User> users) {
         leaderBoardTable.setModel(defaultTableModel);
-        
         for(User user: users) {
             defaultTableModel.addRow(new Object[] {
                 user.getUsername(),
@@ -224,8 +221,9 @@ public class Home extends javax.swing.JFrame {
         if(response == JOptionPane.YES_OPTION) {
             client.sendMessage(new Message("7", sender));
             
+            running = false;
             this.dispose();
-            new Game(client, sender).setVisible(running);
+            new Main(client, sender).setVisible(true);
         }
         else client.sendMessage(new Message("8", sender));
     }
@@ -240,8 +238,9 @@ public class Home extends javax.swing.JFrame {
             JOptionPane.INFORMATION_MESSAGE
         );
         
+        running = false;
         this.dispose();
-        new Game(client, sender).setVisible(true);
+        new Main(client, sender).setVisible(true);
     } 
     
     private void handleReceiveRejectionResponse(Message message) {
