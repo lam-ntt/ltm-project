@@ -12,6 +12,8 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import model.Click;
+import model.ClickDao;
 import model.Game;
 import model.GameDao;
 import model.Point;
@@ -25,11 +27,15 @@ public class ClientHandler implements Runnable{
     private Socket socket;
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
+    private volatile boolean running = true;
     private ClientHandler clientParner;
     private User user;
     private Game game;
-    private List<Point> points = new ArrayList<>();
-    private boolean isLoadingGame = false;
+    private List<Point> points = new ArrayList();
+    private List<Point> clickedPoints = new ArrayList();
+    private boolean  isReady = false;
+    private int isContinuing = -1;
+    private boolean setResult = false;
     
     public ClientHandler (Socket socket) {
         try {
@@ -70,34 +76,26 @@ public class ClientHandler implements Runnable{
     @Override
     public void run() {
         try {
-            while(true) {
+            while(running) {
                 if(!socket.isConnected()) break;
                 
                 try {
                     Message message = (Message) objectInputStream.readObject();
                     switch (message.getCode()) {
+                        // Message from Home screen
                         case "0" -> closeEverything();
                         case "1" -> handleGetAllUserRequest(message);
                         case "2" -> handleGetAllOnlineUserRequest(message);
-                        case "4" -> transferRemoveUserRequest(message);
+                        case "4" -> transferRemoveUserRequest();
                         case "5" -> transferInviteRequest(message);
                         case "7" -> transferAgreementResponse(message);
                         case "8" -> transferRejectResponse(message);
-                        case "12" -> {
-                            clientParner.sendMessage(new Message("12", user));
-                        }
-                        case "13" -> {
-                            if(isLoadingGame == false) {
-                                setUpRandomGame();
-                                sendMessage(new Message("13", game.getPair()));
-                                clientParner.sendMessage(new Message("13", game.getPair()));
-                            }
-                            
-//                            if(isLoadingGame == false) {
-//                                setUpRandomGame();
-//                            }
-//                            sendMessage(new Message("13", game.getPair()));
-                        }
+                        // Message from Related to Main screen
+                        case "12" -> handleReceiveReadyState(message);
+                        case "14" -> transferClick(message);
+                        case "17" -> transferContinueState(message);
+                        case "18" -> transferStopRequest();
+                        case "19" -> saveResult(message);
                         default -> {
                         }
                     }
@@ -111,7 +109,7 @@ public class ClientHandler implements Runnable{
         }
     }
     
-    
+    // Home screen
     
     private void handleGetAllUserRequest(Message message) {
         List<User> users = UserDao.getAllUsers();
@@ -126,14 +124,13 @@ public class ClientHandler implements Runnable{
         sendMessage(new Message("2", users));
     }
     
-    
     private void requestAddUser() {
         for(ClientHandler clientHandler: clientHandlers) {
             clientHandler.sendMessage(new Message("3", this.user));
         }
     }
     
-    private void transferRemoveUserRequest(Message message) {
+    private void transferRemoveUserRequest() {
         for(ClientHandler clientHandler: clientHandlers) {
             if(clientHandler != this) {
                 clientHandler.sendMessage(new Message("4" , this.user));
@@ -186,6 +183,104 @@ public class ClientHandler implements Runnable{
     }
     
     
+    // Main screen
+    
+    private void handleReceiveReadyState(Message message) {
+        isReady = true;
+        if(clientParner.isReady) {
+            sendGame();
+        } else {
+            transferReadyState();
+        }
+    }
+    
+    private void transferReadyState() {
+        clientParner.sendMessage(new Message("12", user));
+    }
+    
+    private void sendGame() {
+        setUpRandomGame();
+        sendMessage(new Message("13", game));
+        clientParner.sendMessage(new Message("13", game));
+    }
+    
+    
+    private void transferClick(Message message) {
+        Click click = (Click) message.getObject();
+        int check = checkClick(click);
+        if(check == 1) {
+            ClickDao.createClick(click);
+            sendMessage(new Message("15", click));
+            clientParner.sendMessage(new Message("15", click));
+        } else {
+            if(check == 0) {
+                sendMessage(new Message("161", click));
+                clientParner.sendMessage(new Message("161", click));
+            } else {
+                sendMessage(new Message("162", click));
+                clientParner.sendMessage(new Message("162", click));
+            }
+            
+        }
+    }
+    
+    private void transferContinueState(Message message) {
+        if(((String) message.getObject()).equals("Yes")) {
+            isContinuing = 1;
+            if(clientParner.isContinuing == 1) {
+                sendMessage(new Message("17", "Yes"));
+                clientParner.sendMessage(new Message("17", "Yes"));
+            } else if(clientParner.isContinuing == 0) {
+                sendMessage(new Message("17", "No"));
+                setUpAfterGame();
+            }
+        } else {
+            isContinuing = 0;
+            if(clientParner.isContinuing == 1) {
+                clientParner.sendMessage(new Message("17", "No"));
+                setUpAfterGame();
+            }
+        }
+    }
+    
+    private void transferStopRequest() {
+        clientParner.sendMessage(new Message("18"));
+        setUpAfterGame();
+    }
+    
+    
+    private void saveResult(Message message) {
+        Game updatedGame = (Game) message.getObject();
+        if(setResult == false) {
+            if(this.game.getUser1().getUsername().equals(updatedGame.getUser1().getUsername())) {
+                this.game.setScore1(updatedGame.getScore1());
+                this.game.setScore2(updatedGame.getScore2());
+            } else {
+                this.game.setScore1(updatedGame.getScore2());
+                this.game.setScore2(updatedGame.getScore1());
+            }
+            
+            if(this.game.getScore1() > this.game.getScore2()) {
+                this.game.setState(1);
+                UserDao.updateUser(this.game.getUser1(), "win");
+                UserDao.updateUser(this.game.getUser2(), "lose");
+            } else if(this.game.getScore1() < this.game.getScore2()) {
+                this.game.setState(-1);
+                UserDao.updateUser(this.game.getUser1(), "lose");
+                UserDao.updateUser(this.game.getUser2(), "win");
+            } else {
+                this.game.setState(0);
+                UserDao.updateUser(this.game.getUser1(), "tie");
+                UserDao.updateUser(this.game.getUser2(), "tie");
+            }
+            
+            GameDao.updateGame(this.game);
+            setResult = true;
+            clientParner.setResult = true;
+        }
+    }
+    
+    
     private void setUpRandomGame() {
         Random random = new Random();
         int randomNumber = random.nextInt(3) + 1;
@@ -196,14 +291,56 @@ public class ClientHandler implements Runnable{
                 randomNumber
         );
         
-        this.game = GameDao.getGame(gameId);
-        this.points = PointDao.getAllPointWithPairId(this.game.getPair().getId());
-        this.isLoadingGame = true;
-        
+        this.game = GameDao.getGame(    gameId);
         clientParner.game = this.game;
+        
+        this.points = PointDao.getAllPointWithPairId(this.game.getPair().getId());
         clientParner.points = this.points;
-        clientParner.isLoadingGame = true;
+        this.clickedPoints.clear();
+        clientParner.clickedPoints.clear();
+        
     }
+    
+    private void setUpAfterGame() {
+        for(GroupHandler groupHandler: groupHandlers) {
+            if(groupHandler.clientHandler1.equals(this) || groupHandler.clientHandler1.equals(clientParner)) {
+                groupHandlers.remove(groupHandler);
+                break;
+            }
+        }
+        
+        this.game = null;
+        clientParner.game = null;
+        this.points = null;
+        clientParner.points = null;
+        this.clickedPoints = null;
+        clientParner.clickedPoints = null;
+        
+        this.isReady = false;
+        clientParner.isReady = false;
+        this.isContinuing = -1;
+        clientParner.isContinuing = -1;
+        
+        clientParner.clientParner = null;
+        this.clientParner = null;
+        
+        setResult = false;
+    }
+    
+    private int checkClick(Click click) {
+        for(Point point: points) {
+            if(click.getX() >= point.getMinX() && click.getX() <= point.getMaxX()
+                    && click.getY() >= point.getMinY() && click.getY() <= point.getMaxY()) {
+                if(clickedPoints.contains(point)) {
+                    return -1;
+                }
+                clickedPoints.add(point);
+                return 1;
+            }
+        }
+        return 0;
+    }
+    
     
     
     public void removeClientHandler() {
@@ -212,7 +349,9 @@ public class ClientHandler implements Runnable{
     
     public void closeEverything() {
         try {
+            transferRemoveUserRequest();
             removeClientHandler();
+            running = false;
             if(objectInputStream != null) objectInputStream.close();
             if(objectOutputStream != null) objectOutputStream.close();
             if(socket != null) socket.close();

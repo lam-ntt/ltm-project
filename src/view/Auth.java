@@ -6,8 +6,6 @@ package view;
 
 import controller.Client;
 import java.awt.CardLayout;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.Socket;
 import javax.swing.JOptionPane;
@@ -16,23 +14,10 @@ import model.UserDao;
 
 
 public class Auth extends javax.swing.JFrame {
-    Client client;
-
+    
     public Auth() {
         initComponents();
         setLocationRelativeTo(null);
-        
-        
-        client = null;
-        
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                if(client != null) {
-                    client.closeEverything();
-                }
-            }
-        });
     }
 
     @SuppressWarnings("unchecked")
@@ -274,10 +259,9 @@ public class Auth extends javax.swing.JFrame {
                     usernameLoginTextField.setText("");
                     passwordLoginTextField.setText("");
                     
+                    this.dispose();
                     try {
-                        client = new Client(new Socket("localhost", 1234), user);
-                        this.dispose();
-                        new Home(client).setVisible(true);
+                        new Home(new Client(new Socket("localhost", 1234), user)).setVisible(true);
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }

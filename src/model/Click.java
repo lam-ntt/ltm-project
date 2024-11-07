@@ -14,6 +14,13 @@ public class Click implements Serializable {
     public Click() {
     }
 
+    public Click(int x, int y, User user, Game game) {
+        this.x = x;
+        this.y = y;
+        this.user = user;
+        this.game = game;
+    }
+
     public int getId() {
         return id;
     }

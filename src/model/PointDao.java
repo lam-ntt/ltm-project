@@ -14,7 +14,10 @@ import java.util.List;
 public class PointDao {
     
     public static void main(String[] args) {
-        
+        List<Point> points = getAllPointWithPairId(2);
+        for(Point p: points) {
+            System.out.println(p.getMaxX());
+        }
     }
     
     public static List<Point> getAllPointWithPairId(int id) {
@@ -26,7 +29,7 @@ public class PointDao {
             ResultSet resultset = statement.executeQuery(query);
             
             List<Point> points = new ArrayList<>();
-            while(!resultset.next()) {
+            while(resultset.next()) {
                 points.add(new Point(
                         resultset.getInt("id"),
                         resultset.getInt("minX"),

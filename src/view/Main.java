@@ -9,9 +9,11 @@ import controller.Message;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.net.Socket;
 import java.net.SocketException;
 import javax.swing.table.DefaultTableModel;
-import model.Pair;
+import model.Click;
+import model.Game;
 import model.User;
 
 
@@ -21,38 +23,22 @@ public class Main extends javax.swing.JFrame {
     private Thread thread;
     private volatile boolean running = true;
     private DefaultTableModel defaultTableModel;
-    private int isReady;
+    private int readyCount;
+    private Game game;
 
     public Main(Client client, User parner) {
         initComponents();
-//        setLocationRelativeTo(null);
         
         this.client = client;
         this.user = client.getUser();
         this.parner = parner;
         this.thread = initThread();
         thread.start();
+        
+        initLabel();
         initTable();
-        isReady = 0;
         
         setUpAtBeginning();
-        
-        ruleDescTextArea.setText(Const.RULE);
-        ruleDescTextArea.setOpaque(false);
-        ruleDescTextArea.setLineWrap(true);
-        ruleDescTextArea.setWrapStyleWord(true);
-        
-        clockLabel.setText("");
-        clockLabel.setHorizontalAlignment(JLabel.CENTER);
-        clockLabel.setVerticalAlignment(JLabel.CENTER);
-        
-        notiLabel.setText("");
-        notiLabel.setHorizontalAlignment(JLabel.CENTER);
-        notiLabel.setVerticalAlignment(JLabel.CENTER);
-        
-        messageLabel.setText("");
-        messageLabel.setHorizontalAlignment(JLabel.CENTER);
-        messageLabel.setVerticalAlignment(JLabel.CENTER);
     }
     
     public Thread initThread() {
@@ -66,22 +52,13 @@ public class Main extends javax.swing.JFrame {
                         try {
                             Message message = (Message) client.getObjectInputStream().readObject();
                             switch (message.getCode()) {
-                                case "12" -> {
-                                    isReady += 1;
-                                    if(isReady == 2) {
-                                        CardLayout cartLayout = (CardLayout) jPanel1.getLayout();
-                                        cartLayout.next(jPanel1);
-                                        
-                                        client.sendMessage(new Message("13"));
-                                    } else {
-                                        User user = (User) message.getObject();
-                                        notiLabel.setText(user.getUsername() + " is ready!");
-                                    }
-                                }
-                                case "13" -> {
-                                    Pair pair = (Pair) message.getObject();
-                                    setUpInGame(pair);
-                                }
+                                case "12" -> handleReceiveReadyState(message);
+                                case "13" -> handleReceiveGame(message);
+                                case "15" -> handleReceiveRightClick(message);
+                                case "161" -> handleReceiveFailClick(message, 1);
+                                case "162" -> handleReceiveFailClick(message, 2);
+                                case "17" -> handleReceiveContinueRequest(message);
+                                case "18" -> handleReceiveStopRequest();
                                 default -> {
                                 }
                             }
@@ -96,8 +73,24 @@ public class Main extends javax.swing.JFrame {
         });
     }
     
+    private void initLabel() {
+        clockLabel.setHorizontalAlignment(JLabel.CENTER);
+        clockLabel.setVerticalAlignment(JLabel.CENTER);
+        
+        notiLabel.setHorizontalAlignment(JLabel.CENTER);
+        notiLabel.setVerticalAlignment(JLabel.CENTER);
+        
+        messageLabel.setHorizontalAlignment(JLabel.CENTER);
+        messageLabel.setVerticalAlignment(JLabel.CENTER);
+        
+        ruleDescTextArea.setText(Const.RULE);
+        ruleDescTextArea.setOpaque(false);
+        ruleDescTextArea.setLineWrap(true);
+        ruleDescTextArea.setWrapStyleWord(true);
+    }
+    
     private void initTable() {
-        this.defaultTableModel = new DefaultTableModel();
+        defaultTableModel = new DefaultTableModel();
         defaultTableModel.addColumn(user.getUsername());
         defaultTableModel.addColumn(parner.getUsername());
         
@@ -105,22 +98,195 @@ public class Main extends javax.swing.JFrame {
         defaultTableModel.addRow(new Object[] {0, 0});
     }
     
-    private void setUpAtBeginning () {
-        clockLabel.setText("");
-        stopButton.setEnabled(false);
+    private void updateTable() {
+        defaultTableModel.removeRow(0);
+        if(game.getUser1().getUsername().equals(user.getUsername())) {
+            defaultTableModel.addRow(new Object[] {game.getScore1(), game.getScore2()});
+        } else {
+            defaultTableModel.addRow(new Object[] {game.getScore2(), game.getScore1()});
+        }
     }
     
-    private void setUpInGame (Pair pair) {
+    private void setUpAtBeginning () {
+        clockLabel.setText("");
+        notiLabel.setText("");
+        messageLabel.setText("");
+        
+        startButton.setEnabled(true);
+        stopButton.setEnabled(false);
+        scoreTable.setVisible(false);
+        
+        readyCount = 0;
+        game = null;
+    }
+    
+    private void setUpInGame (Game game) {
         startButton.setEnabled(false);
         stopButton.setEnabled(true);
+        scoreTable.setVisible(true);
         
-        image1Label.setIcon(convertImage(Const.BASE_PATH + pair.getImage1()));
+        image1Label.setIcon(convertImage(Const.BASE_PATH + game.getPair().getImage1()));
         image1Label.setHorizontalAlignment(JLabel.CENTER);
         image1Label.setVerticalAlignment(JLabel.CENTER);
         
-        image2Label.setIcon(convertImage(Const.BASE_PATH + pair.getImage2()));
+        image2Label.setIcon(convertImage(Const.BASE_PATH + game.getPair().getImage2()));
         image2Label.setHorizontalAlignment(JLabel.CENTER);
         image2Label.setVerticalAlignment(JLabel.CENTER);
+        
+        openNextScreen();
+    }
+    
+    private void resetGame() {
+        initTable();
+        setUpAtBeginning();
+        openNextScreen();
+    }
+    
+    
+    private void sendReadyState() {
+        client.sendMessage(new Message("12", parner));
+    }
+    
+    private void handleReceiveReadyState(Message message) {
+        readyCount += 1;
+        if(readyCount == 1) {
+            User user = (User) message.getObject();
+            notiLabel.setText(user.getUsername() + " is ready!");
+        }
+    }
+    
+    private void handleReceiveGame(Message message) {
+        game = (Game) message.getObject();
+        setUpInGame(game);
+    }
+    
+    
+    private void sendClick(Click click) {
+        client.sendMessage(new Message("14", click));
+    }
+    
+    private void handleReceiveRightClick(Message message) {
+        Click click = (Click) message.getObject();
+        String mes;
+        if(click.getUser().getUsername().equals(user.getUsername())) {
+            mes = "Correct point!";
+            if(game.getUser1().getUsername().equals(user.getUsername())) game.setScore1(game.getScore1() + 1);
+            else game.setScore2(game.getScore2() + 1);
+        } else {
+            mes = click.getUser().getUsername() + " found one correct point!";
+            if(game.getUser1().getUsername().equals(parner.getUsername())) game.setScore1(game.getScore1() + 1);
+            else game.setScore2(game.getScore2() + 1);
+        }
+
+        updateTable();
+        messageLabel.setText(mes);
+        markPos(image1Label, "O", click.getX(), click.getY());
+        markPos(image2Label, "O", click.getX(), click.getY());
+
+        if(game.getScore1() + game.getScore2() == 5) {
+            endGame();
+        }
+    }
+    
+    private void handleReceiveFailClick(Message message, int error) {
+        Click click = (Click) message.getObject();
+        String mes;
+        if(click.getUser().getUsername().equals(user.getUsername())) {
+            mes = click.getUser().getUsername();
+            if(error == 1) mes += " clicked in incorrect point!";
+            else mes += " clicked in checked point!";
+            
+        } else {
+            if(error == 1) mes = "Incorrect point!";
+            else mes = "Checked point!";
+        }
+        messageLabel.setText(mes);
+    }
+    
+    
+    private void sendContinueState() {
+        client.sendMessage(new Message("17", "Yes"));
+    }
+    
+    private void sendNotContinueState() {
+        client.sendMessage(new Message("17", "No"));
+    }
+    
+    private void handleReceiveContinueRequest(Message message) {
+        if(((String) message.getObject()).equals("Yes")) {
+            resetGame();
+        } else {
+            JOptionPane.showMessageDialog(
+                    this, 
+                    parner.getUsername() + " reject continuing this game!",
+                    "Notification",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+            
+            running = false;
+            client.closeEverything();
+            this.dispose();
+            try {
+                new Home(new Client(new Socket("localhost", 1234), user)).setVisible(true);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+    
+    
+    private void sendStopRequest() {
+        client.sendMessage(new Message("18"));
+    }
+    
+    private void handleReceiveStopRequest() {
+        JOptionPane.showMessageDialog(
+                this, 
+                parner.getUsername() + " stop this game!", 
+                "Notification", 
+                JOptionPane.INFORMATION_MESSAGE
+        );
+        
+        running = false;
+        client.closeEverything();
+        this.dispose();
+        try {
+            new Home(client = new Client(new Socket("localhost", 1234), user)).setVisible(true);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    
+    private void endGame() {
+        client.sendMessage(new Message("19", game));
+        String msg;
+        if(game.getUser1().getUsername().equals(user.getUsername())) {
+            if(game.getScore1() > game.getScore2()) msg = "Congratulations! You win this game with a score ";
+            else msg = "You lose this game with a score ";
+            msg += game.getScore1() + "-" + game.getScore2();
+        } else {
+            if(game.getScore1() < game.getScore2()) msg = "Congratulations! You win this game with a score ";
+            else msg = "You lose this game with a score ";
+            msg += game.getScore2() + "-" + game.getScore1();
+        }
+        msg += ". You want to continue this game?";
+        
+        int response = JOptionPane.showConfirmDialog(
+                this, 
+                msg, 
+                "Notification", 
+                JOptionPane.YES_NO_OPTION
+        );
+        
+        if(response == JOptionPane.YES_OPTION) {
+            sendContinueState();
+        } else {
+            sendNotContinueState();
+            running = false;
+            this.dispose();
+            new Home(client).setVisible(true);
+        }
     }
     
     
@@ -137,11 +303,41 @@ public class Main extends javax.swing.JFrame {
                 
         return new ImageIcon(scaledImage);
     }
+    
+    private void markPos(JLabel label, String shape, int x, int y) {
+        SwingUtilities.invokeLater(() -> {
+            Graphics2D g2d = (Graphics2D) label.getGraphics();
 
+            g2d.setStroke(new BasicStroke(4.0f));
+            g2d.setRenderingHint(
+                    RenderingHints.KEY_ANTIALIASING, 
+                    RenderingHints.VALUE_ANTIALIAS_ON
+            );
+            
+            if(shape.equals("O")) {
+                g2d.setColor(Color.GREEN);
+                g2d.drawOval(
+                        x - Const.SHAPE_SIZE / 2, y - Const.SHAPE_SIZE / 2, 
+                        Const.SHAPE_SIZE, Const.SHAPE_SIZE
+                );
+            } else {
+                g2d.setColor(Color.RED);
+                g2d.drawLine(
+                        x - Const.SHAPE_SIZE / 2, y - Const.SHAPE_SIZE / 2, 
+                        x + Const.SHAPE_SIZE / 2, y + Const.SHAPE_SIZE / 2
+                );
+                g2d.drawLine(
+                        x + Const.SHAPE_SIZE / 2, y - Const.SHAPE_SIZE / 2, 
+                        x - Const.SHAPE_SIZE / 2, y + Const.SHAPE_SIZE / 2
+                );
+            }
+        });
+    }
     
-    
-    
-    
+    private void openNextScreen() {
+        CardLayout cartLayout = (CardLayout) jPanel1.getLayout();
+        cartLayout.next(jPanel1);
+    }
     
     
     @SuppressWarnings("unchecked")
@@ -272,6 +468,11 @@ public class Main extends javax.swing.JFrame {
             }
         ));
         jScrollPane1.setViewportView(scoreTable);
+        if (scoreTable.getColumnModel().getColumnCount() > 0) {
+            scoreTable.getColumnModel().getColumn(0).setHeaderValue("User 1");
+            scoreTable.getColumnModel().getColumn(1).setResizable(false);
+            scoreTable.getColumnModel().getColumn(1).setHeaderValue("User 2");
+        }
 
         clockLabel.setText("jLabel1");
 
@@ -279,6 +480,11 @@ public class Main extends javax.swing.JFrame {
         titleLabel.setText("In Game");
 
         stopButton.setText("Stop");
+        stopButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                stopButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -340,35 +546,40 @@ public class Main extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void image1LabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_image1LabelMouseClicked
-        System.out.println(evt.getX() + " " + evt.getY());
+        sendClick(new Click(evt.getX(), evt.getY(), user, game));
     }//GEN-LAST:event_image1LabelMouseClicked
 
     private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
-        isReady += 1;
-        client.sendMessage(new Message("12", parner));
-        if(isReady == 2) {
-            CardLayout cartLayout = (CardLayout) jPanel1.getLayout();
-            cartLayout.next(jPanel1);
-            
-            client.sendMessage(new Message("13"));
-        }
-
-//        CardLayout cartLayout = (CardLayout) jPanel1.getLayout();
-//        cartLayout.next(jPanel1);
+        startButton.setEnabled(false);
+        readyCount += 1;
+        sendReadyState();
     }//GEN-LAST:event_startButtonActionPerformed
 
     private void image2LabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_image2LabelMouseClicked
-        System.out.println(evt.getX() + " " + evt.getY());
+        sendClick(new Click(evt.getX(), evt.getY(), user, game));
     }//GEN-LAST:event_image2LabelMouseClicked
 
-//    public static void main(String args[]) {
-//        
-//        java.awt.EventQueue.invokeLater(new Runnable() {
-//            public void run() {
-//                new Game(null, null).setVisible(true);
-//            }
-//        });
-//    }
+    private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionPerformed
+        int response = JOptionPane.showConfirmDialog(
+                this, 
+                "You want to stop this game, right?", 
+                "Confirmation", 
+                JOptionPane.YES_NO_OPTION
+        );
+        
+        if(response == JOptionPane.YES_OPTION) {
+            sendStopRequest();
+        
+            running = false;
+            client.closeEverything();
+            this.dispose();
+            try {
+                new Home(client = new Client(new Socket("localhost", 1234), user)).setVisible(true);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }//GEN-LAST:event_stopButtonActionPerformed
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel clockLabel;

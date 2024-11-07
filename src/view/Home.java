@@ -22,7 +22,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import model.User;
 
-
 public class Home extends javax.swing.JFrame {
     private Client client;
     private User user;
@@ -30,7 +29,7 @@ public class Home extends javax.swing.JFrame {
     private volatile boolean running = true;
     private DefaultTableModel defaultTableModel;
 
-    public Home(Client client) throws IOException {
+    public Home(Client client) {
         initComponents();
         setLocationRelativeTo(null);
         
@@ -38,26 +37,20 @@ public class Home extends javax.swing.JFrame {
         this.user = client.getUser();
         this.thread = initThread();
         thread.start();
-        initTable();
         
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 running = false;
                 if(client != null) {
+                    requestRemoveUser();
                     client.closeEverything();
                 }
             }
         });
         
-        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        leaderBoardLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        onlineUsersLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        
-        usernameLabel.setText("Username: " + this.user.getUsername());
-        winLabel.setText("Win: " + this.user.getWin());
-        loseLabel.setText("Lose: " + this.user.getLose());
-        tieLabel.setText("Tie: " + this.user.getTie());
+        initTable();
+        initLabel();
         
         requestGetAllUserInfo();
         requestGetAllOnlineUser();
@@ -96,6 +89,17 @@ public class Home extends javax.swing.JFrame {
         });
     }
     
+    private void initLabel() {
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        leaderBoardLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        onlineUsersLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        
+        usernameLabel.setText("Username: " + this.user.getUsername());
+        winLabel.setText("Win: " + this.user.getWin());
+        loseLabel.setText("Lose: " + this.user.getLose());
+        tieLabel.setText("Tie: " + this.user.getTie());
+    }
+    
     private void initTable() {
         this.defaultTableModel = new DefaultTableModel();
         defaultTableModel.addColumn("USER");
@@ -129,6 +133,7 @@ public class Home extends javax.swing.JFrame {
         jPanel5.revalidate();
     }
     
+    
     private JLabel createLabel(User user) {
         JLabel label = new JLabel(user.getUsername(), SwingConstants.CENTER);
         label.addMouseListener(new MouseAdapter() {
@@ -154,7 +159,6 @@ public class Home extends javax.swing.JFrame {
         }
         return null;
     }
-    
     
     
     private void requestGetAllUserInfo() {
@@ -211,6 +215,7 @@ public class Home extends javax.swing.JFrame {
     
     private void handleReceiveInvitationRequest(Message message) {
         User sender = (User) message.getObject();
+        
         int response = JOptionPane.showConfirmDialog(
             mainPanel, 
             sender.getUsername() + " invites you to join a game!", 
@@ -220,7 +225,6 @@ public class Home extends javax.swing.JFrame {
 
         if(response == JOptionPane.YES_OPTION) {
             client.sendMessage(new Message("7", sender));
-            
             running = false;
             this.dispose();
             new Main(client, sender).setVisible(true);
@@ -264,10 +268,6 @@ public class Home extends javax.swing.JFrame {
             JOptionPane.INFORMATION_MESSAGE
         );
     }
-
-    
-    
-    
     
     
     @SuppressWarnings("unchecked")

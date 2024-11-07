@@ -12,8 +12,6 @@ import java.sql.SQLException;
 public class GameDao {
     
     public static void main(String[] args) {
-        int temp = createGameWithPairId(1, 15, 1);
-        System.out.println(getGame(temp).getId());
     }
     
     public static int createGameWithPairId(int userId1, int userId2, int id) {
@@ -51,7 +49,7 @@ public class GameDao {
                     PairDao.getPair(resultSet.getInt("pairId")),
                     resultSet.getInt("score1"),
                     resultSet.getInt("score2"),
-                    resultSet.getString("state")
+                    resultSet.getInt("state")
             );
             
             return game;
@@ -60,5 +58,24 @@ public class GameDao {
         }
         
         return null;
+    }
+    
+    public static boolean updateGame(Game game) {
+        try {
+            Connection con = Connectionn.getConnection();
+            Statement statement = con.createStatement();
+            
+            String query = "UPDATE GAME SET SCORE1 = " + game.getScore1() + 
+                    ", SCORE2 = " + game.getScore2() + 
+                    ", STATE = '" + game.getState() + "' " + 
+                    "WHERE ID = " + game.getId();
+            
+            int result = statement.executeUpdate(query);
+            return (result > 0);
+        } catch(SQLException ex) {
+            ex.printStackTrace();
+        }
+        
+        return false;
     }
 }

@@ -3,11 +3,24 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/model/UserDao.java</file>
             <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/controller/Server.java</file>
-            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/view/Auth.java</file>
-            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/view/Game.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/model/GameDao.java</file>
             <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/view/Home.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/model/Pair.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/model/User.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/view/Auth.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/model/PairDao.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/model/ClickDao.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/model/Game.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/view/Const.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/model/Point.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/view/Main.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/model/Click.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/controller/Client.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/model/PointDao.java</file>
             <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/controller/ClientHandler.java</file>
+            <file>file:/D:/drive/project/inclass/pttk-projects/ltm-project2/src/model/Message.java</file>
         </group>
     </open-files>
 </project-private>

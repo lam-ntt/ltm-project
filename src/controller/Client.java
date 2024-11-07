@@ -26,7 +26,6 @@ public class Client {
             objectOutputStream.writeObject(user);
             
         } catch(IOException e) {
-            closeEverything();
             e.printStackTrace();
         }
     }
@@ -42,8 +41,6 @@ public class Client {
     public ObjectInputStream getObjectInputStream() {
         return objectInputStream;
     }
-    
-    
     
     public void sendMessage(Message message) {
         try {
@@ -71,12 +68,5 @@ public class Client {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-    
-    public static void main(String[] args) throws IOException {
-        Socket socket = new Socket("localhost", 1234);
-//        Client client = new Client(socket, new User(username, "123", 0, 0, 0));
-//        client.listenForMessage();
-//        client.sendMessage();
     }
 }

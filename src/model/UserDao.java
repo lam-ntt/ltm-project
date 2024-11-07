@@ -16,14 +16,7 @@ import java.util.List;
 public class UserDao {
     
     public static void main(String[] args) {
-//        System.out.println(getUserByName("lam"));
-//        createUser(new User("lam", "123", 0, 0, 0));
-
-        List<User> users = getAllUsers();
-        
-        for(User user: users) {
-            System.out.println(user.getUsername() + " " + user.getWin() + " " + user.getTie() + " " + user.getLose());
-        }
+        updateUser(new User(1, "lam", "123", 0, 0, 0), "win");
     }
     
     public static User getUser(int id) {
@@ -127,9 +120,6 @@ public class UserDao {
     }
     
     
-    
-
-    
     public static boolean createUser(User user) {
         try {
             Connection con = Connectionn.getConnection();
@@ -147,17 +137,31 @@ public class UserDao {
         return false;
     }
     
-    public static void updateUser(User user) {
+    public static boolean updateUser(User user, String state) {
         try {
             Connection con = Connectionn.getConnection();
             Statement statement = con.createStatement();
             
-            String query = "";
+            String query;
+            if(state.equals("win")) {
+                query = "UPDATE USER SET WIN = " + (user.getWin() + 1) +
+                        " WHERE ID = " + user.getId();
+            } else if (state.equals("lose")) {
+                query = "UPDATE USER SET LOSE = " + (user.getLose()+ 1) +
+                        " WHERE ID = " + user.getId();
+            } else {
+                query = "UPDATE USER SET TIE = " + (user.getTie()+ 1) +
+                        " WHERE ID = " + user.getId();
+                query = "";
+            }
+            
             int result = statement.executeUpdate(query);
             
-            
+            return (result > 0);
         } catch(SQLException ex) {
             ex.printStackTrace();
         }
+        
+        return false;
     }
 }
