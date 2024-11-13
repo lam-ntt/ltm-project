@@ -58,7 +58,7 @@ public class Client {
     
     public void closeEverything() {
         try {
-            sendMessage(new Message("0"));
+            sendMessage(new Message("RQ-CLOSE"));
             if(objectInputStream != null) objectInputStream.close();
             if(objectOutputStream != null) objectOutputStream.close();
             if(socket != null) socket.close();

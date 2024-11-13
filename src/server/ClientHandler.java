@@ -46,7 +46,7 @@ public class ClientHandler implements Runnable{
             this.clientParner = null;
             this.user = (User) objectInputStream.readObject();
             if(user != null) {
-                requestAddUser();
+                requestAddUserToOnlineUsers();
                 clientHandlers.add(this);
             }
         } catch(Exception ex) {
@@ -84,23 +84,23 @@ public class ClientHandler implements Runnable{
                     Message message = (Message) objectInputStream.readObject();
                     switch (message.getCode()) {
                         // Message from Auth screen
-                        case "-1" -> handleLoginRequest(message);
-                        case "-2" -> handleRegisterRequest(message);
+                        case "RQ-REGISTER" -> handleRegisterRequest(message);
+                        case "RQ-LOGIN" -> handleLoginRequest(message);
                         // Message from Home screen
-                        case "0" -> closeEverything();
-                        case "01" -> handleGetUserRequest(message);
-                        case "1" -> handleGetAllUserRequest(message);
-                        case "2" -> handleGetAllOnlineUserRequest(message);
-                        case "4" -> transferRemoveUserRequest();
-                        case "5" -> transferInviteRequest(message);
-                        case "7" -> transferAgreementResponse(message);
-                        case "8" -> transferRejectResponse(message);
+                        case "RQ-CLOSE" -> closeEverything();
+                        case "RQ-USER" -> handleGetUserRequest(message);
+                        case "RQ-USERS" -> handleGetAllUsersRequest(message);
+                        case "RQ-ONLINE" -> handleGetAllOnlineUsersRequest(message);
+                        case "RQ-REMOVE" -> transferRemoveUserFromOnlineUsersRequest();
+                        case "RQ-INVITE" -> transferInviteRequest(message);
+                        case "RP-AGREE" -> transferAgreementResponse(message);
+                        case "RP-REJECT" -> transferRejectResponse(message);
                         // Message from Main screen
-                        case "12" -> handleReceiveReadyState(message);
-                        case "14" -> transferClick(message);
-                        case "17" -> transferContinueState(message);
-                        case "18" -> transferStopRequest();
-                        case "19" -> saveResult(message);
+                        case "RQ-READY" -> handleReceiveReadyState(message);
+                        case "RQ-CLICK" -> handleReceiveClick(message);
+                        case "RQ-ENDGAME" -> handleEndGame(message);
+                        case "RQ-CONTINUE" -> handleReceiveContinueState(message);
+                        case "RQ-STOP" -> handleStopRequest();
                         default -> {
                         }
                     }
@@ -120,49 +120,55 @@ public class ClientHandler implements Runnable{
         User user = (User) message.getObject();
         User existedUser = UserDao.getUserByName(user.getUsername());
         if(existedUser != null) {
-            sendMessage(new Message("-2", null));
+            sendMessage(new Message("RP-REGISTER", null));
         } else {
-            UserDao.createUser(user);
-            sendMessage(new Message("-2", user));
+            User newUser = UserDao.createUser(user);
+            sendMessage(new Message("RP-REGISTER", newUser));
+            
+            List<User> users = UserDao.getAllUsers();
+            for(ClientHandler clientHandler: clientHandlers) {
+                clientHandler.sendMessage(new Message("RP-USERS", users));
+            }
         }
     }
     
     private void handleLoginRequest(Message message) {
         User user = (User) message.getObject();
         User existedUser = UserDao.getUserByName(user.getUsername());
-        sendMessage(new Message("-1", existedUser));
+        sendMessage(new Message("RP-LOGIN", existedUser));
     }
+    
     
     // Home screen
     
     private void handleGetUserRequest(Message message) {
         this.user = UserDao.getUser(this.user.getId());
-        sendMessage(new Message("01", UserDao.getUser(this.user.getId())));
+        sendMessage(new Message("RP-USER", UserDao.getUser(this.user.getId())));
     }
     
-    private void handleGetAllUserRequest(Message message) {
+    private void handleGetAllUsersRequest(Message message) {
         List<User> users = UserDao.getAllUsers();
-        sendMessage(new Message("1", users));
+        sendMessage(new Message("RP-USERS", users));
     }
     
-    private void handleGetAllOnlineUserRequest(Message message) {
+    private void handleGetAllOnlineUsersRequest(Message message) {
         List<User> users = new ArrayList();
         for(ClientHandler clientHandler: clientHandlers) {
             users.add(clientHandler.user);
         }
-        sendMessage(new Message("2", users));
+        sendMessage(new Message("RP-ONLINE", users));
     }
     
-    private void requestAddUser() {
+    private void requestAddUserToOnlineUsers() {
         for(ClientHandler clientHandler: clientHandlers) {
-            clientHandler.sendMessage(new Message("3", this.user));
+            clientHandler.sendMessage(new Message("RQ-ADD", this.user));
         }
     }
     
-    private void transferRemoveUserRequest() {
+    private void transferRemoveUserFromOnlineUsersRequest() {
         for(ClientHandler clientHandler: clientHandlers) {
             if(clientHandler != this) {
-                clientHandler.sendMessage(new Message("4" , this.user));
+                clientHandler.sendMessage(new Message("RQ-REMOVE" , this.user));
             }
         }
     }
@@ -173,14 +179,14 @@ public class ClientHandler implements Runnable{
         for(GroupHandler groupHandler: groupHandlers) {
             if(groupHandler.clientHandler1.getClientUsername().equals(receiver.getUsername()) || 
                     groupHandler.clientHandler2.getClientUsername().equals(receiver.getUsername())) {
-                sendMessage(new Message("11", receiver));
+                sendMessage(new Message("RP-BUSY", receiver));
                 return;
             }
         }
         
         for(ClientHandler clientHandler: clientHandlers) {
             if(clientHandler.user.getUsername().equals(receiver.getUsername())) {
-                clientHandler.sendMessage(new Message("6", this.user));
+                clientHandler.sendMessage(new Message("RQ-INVITE", this.user));
                 break;
             }
         }
@@ -190,7 +196,7 @@ public class ClientHandler implements Runnable{
         User receiver = (User) message.getObject();
         for(ClientHandler clientHandler: clientHandlers) {
             if(clientHandler.user.getUsername().equals(receiver.getUsername())) {
-                clientHandler.sendMessage(new Message("9", this.user));
+                clientHandler.sendMessage(new Message("RP-AGREE", this.user));
                 
                 GroupHandler groupHandler = new GroupHandler(this, clientHandler);
                 groupHandlers.add(groupHandler);
@@ -205,7 +211,7 @@ public class ClientHandler implements Runnable{
         User receiver = (User) message.getObject();
         for(ClientHandler clientHandler: clientHandlers) {
             if(clientHandler.user.getUsername().equals(receiver.getUsername())) {
-                clientHandler.sendMessage(new Message("10", this.user));
+                clientHandler.sendMessage(new Message("RP-REJECT", this.user));
                 break;
             }
         }
@@ -217,70 +223,34 @@ public class ClientHandler implements Runnable{
     private void handleReceiveReadyState(Message message) {
         isReady = true;
         if(clientParner.isReady) {
-            sendGame();
+            setUpRandomGame();
+            sendMessage(new Message("RP-GAME", game));
+            clientParner.sendMessage(new Message("RP-GAME", game));
         } else {
-            transferReadyState();
+            clientParner.sendMessage(new Message("RQ-READY", user));
         }
     }
     
-    private void transferReadyState() {
-        clientParner.sendMessage(new Message("12", user));
-    }
-    
-    private void sendGame() {
-        setUpRandomGame();
-        sendMessage(new Message("13", game));
-        clientParner.sendMessage(new Message("13", game));
-        
-        
-    }
-    
-    
-    private void transferClick(Message message) {
+    private void handleReceiveClick(Message message) {
         Click click = (Click) message.getObject();
         int check = checkClick(click);
         if(check == 1) {
             ClickDao.createClick(click);
-            sendMessage(new Message("15", click));
-            clientParner.sendMessage(new Message("15", click));
+            sendMessage(new Message("RP-RIGHTCLICK", click));
+            clientParner.sendMessage(new Message("RP-RIGHTCLICK", click));
         } else {
             if(check == 0) {
-                sendMessage(new Message("161", click));
-                clientParner.sendMessage(new Message("161", click));
+                sendMessage(new Message("RP-FAILCLICK1", click));
+                clientParner.sendMessage(new Message("RP-FAILCLICK1", click));
             } else {
-                sendMessage(new Message("162", click));
-                clientParner.sendMessage(new Message("162", click));
+                sendMessage(new Message("RP-FALICLICK2", click));
+                clientParner.sendMessage(new Message("RP-FALICLICK2", click));
             }
             
         }
     }
     
-    private void transferContinueState(Message message) {
-        if(((String) message.getObject()).equals("Yes")) {
-            isContinuing = 1;
-            if(clientParner.isContinuing == 1) {
-                sendMessage(new Message("17", "Yes"));
-                clientParner.sendMessage(new Message("17", "Yes"));
-            } else if(clientParner.isContinuing == 0) {
-                sendMessage(new Message("17", "No"));
-                setUpAfterGame();
-            }
-        } else {
-            isContinuing = 0;
-            if(clientParner.isContinuing == 1) {
-                clientParner.sendMessage(new Message("17", "No"));
-                setUpAfterGame();
-            }
-        }
-    }
-    
-    private void transferStopRequest() {
-        clientParner.sendMessage(new Message("18"));
-        setUpAfterGame();
-    }
-    
-    
-    private void saveResult(Message message) {
+    private void handleEndGame(Message message) {
         Game updatedGame = (Game) message.getObject();
         if(setResult == false) {
             if(this.game.getUser1().getUsername().equals(updatedGame.getUser1().getUsername())) {
@@ -311,6 +281,35 @@ public class ClientHandler implements Runnable{
         }
     }
     
+    private void handleReceiveContinueState(Message message) {
+        if(((String) message.getObject()).equals("Yes")) {
+            isContinuing = 1;
+            if(clientParner.isContinuing == 1) {
+                sendMessage(new Message("RP-CONTINUE", "Yes"));
+                clientParner.sendMessage(new Message("RP-CONTINUE", "Yes"));
+                resetGame();
+                clientParner.resetGame();
+            } else if(clientParner.isContinuing == 0) {
+                sendMessage(new Message("RP-CONTINUE", "No"));
+                clearGame();
+            }
+        } else {
+            isContinuing = 0;
+            if(clientParner.isContinuing == 1) {
+                clientParner.sendMessage(new Message("RP-CONTINUE", "No"));
+                clearGame();
+            } else if(clientParner.isContinuing == 0) {
+                clearGame();
+            }
+        }
+    }
+    
+    
+    private void handleStopRequest() {
+        clientParner.sendMessage(new Message("RQ-STOP"));
+        clearGame();
+    }
+    
     
     private void setUpRandomGame() {
         Random random = new Random();
@@ -327,12 +326,9 @@ public class ClientHandler implements Runnable{
         
         this.points = PointDao.getAllPointWithPairId(this.game.getPair().getId());
         clientParner.points = this.points;
-        this.clickedPoints.clear();
-        clientParner.clickedPoints.clear();
-        
     }
     
-    private void setUpAfterGame() {
+    private void clearGame() {
         for(GroupHandler groupHandler: groupHandlers) {
             if(groupHandler.clientHandler1.equals(this) || groupHandler.clientHandler1.equals(clientParner)) {
                 groupHandlers.remove(groupHandler);
@@ -342,21 +338,54 @@ public class ClientHandler implements Runnable{
         
         this.game = null;
         clientParner.game = null;
+        
         this.points = null;
         clientParner.points = null;
-        this.clickedPoints = null;
-        clientParner.clickedPoints = null;
+        
+        this.clickedPoints.clear();
+        clientParner.clickedPoints.clear();
         
         this.isReady = false;
         clientParner.isReady = false;
+        
         this.isContinuing = -1;
         clientParner.isContinuing = -1;
         
+        setResult = false;
+        this.setResult = false;
+        
         clientParner.clientParner = null;
         this.clientParner = null;
+    }
+    
+    private void resetGame() {
+        for(GroupHandler groupHandler: groupHandlers) {
+            if(groupHandler.clientHandler1.equals(this) || groupHandler.clientHandler1.equals(clientParner)) {
+                groupHandlers.remove(groupHandler);
+                break;
+            }
+        }
+        
+        this.game = null;
+        clientParner.game = null;
+        
+        this.points = null;
+        clientParner.points = null;
+        
+        this.clickedPoints.clear();
+        clientParner.clickedPoints.clear();
+        
+        this.isReady = false;
+        clientParner.isReady = false;
+        
+        this.isContinuing = -1;
+        clientParner.isContinuing = -1;
         
         setResult = false;
+        this.setResult = false;
     }
+    
+    
     
     private int checkClick(Click click) {
         for(Point point: points) {
@@ -380,7 +409,7 @@ public class ClientHandler implements Runnable{
     public void closeEverything() {
         try {
             if(user != null) {
-                transferRemoveUserRequest();
+                transferRemoveUserFromOnlineUsersRequest();
                 removeClientHandler();
                 running = false;
             }

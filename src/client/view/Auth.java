@@ -25,6 +25,7 @@ public class Auth extends javax.swing.JFrame {
         resetLabel();
     }
     
+    
     private void initClient() {
         try {
             client = new Client(new Socket(Const.HOST, Const.PORT), null);
@@ -40,77 +41,68 @@ public class Auth extends javax.swing.JFrame {
         passwordLoginTextField.setText("");
     }
     
-    private void handleReceiveRegisterInfo(String username, String password) {
-        Message message = null;
-        try {
-            message = (Message) client.getObjectInputStream().readObject();
-            if(message.getCode().equals("-2")) {
-                User createdUser = (User) message.getObject();
-                if(createdUser == null) {
-                    JOptionPane.showMessageDialog(
-                        null, 
-                        "This username was selected. Please choose another!", 
-                        "Error", 
-                        JOptionPane.ERROR_MESSAGE
-                    );
-                } else {
-                    JOptionPane.showMessageDialog(
-                        null, 
-                        "Your account created successfully. Now, you able to login!", 
-                        "Message", 
-                        JOptionPane.INFORMATION_MESSAGE
-                    );
+    
+    private void handleReceiveRegisterResponse(Message message) {
+        User createdUser = (User) message.getObject();
+        if(createdUser == null) {
+            JOptionPane.showMessageDialog(
+                null, 
+                "This username was selected. Please choose another!", 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE
+            );
+        } else {
+            JOptionPane.showMessageDialog(
+                null, 
+                "Your account created successfully. Now, you able to login!", 
+                "Message", 
+                JOptionPane.INFORMATION_MESSAGE
+            );
 
-                    resetLabel();
-                    openNextCard();
-                }
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            resetLabel();
+            openNextCard();
         }
     }
     
-    private void handleReceiveLoginInfo(String username, String password) {
-        Message message = null;
-        try {
-            message = (Message) client.getObjectInputStream().readObject();
-            if(message.getCode().equals("-1")) {
-                User userFromDB = (User) message.getObject();
-                if(userFromDB == null) {
-                    JOptionPane.showMessageDialog(
-                        null, 
-                        "This username is not existed! ", 
-                        "Error", 
-                        JOptionPane.ERROR_MESSAGE
-                    );
-                } else {
-                    if(userFromDB.getPassword().equals(Hash.hash(password))) {
-                        resetLabel();
-                        client.closeEverything();
-                        
-                        this.dispose();
-                        new Home(new Client(new Socket(Const.HOST, Const.PORT), userFromDB))
-                                .setVisible(true);
-                    } else {
-                        JOptionPane.showMessageDialog(
-                            null, 
-                            "This password is wrong!", 
-                            "Error", 
-                            JOptionPane.ERROR_MESSAGE
-                        );
-                    }
+    private void handleReceiveLoginResponse(Message message) {
+        User userFromDB = (User) message.getObject();
+        if(userFromDB == null) {
+            JOptionPane.showMessageDialog(
+                null, 
+                "This username is not existed! ", 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE
+            );
+        } else {
+            if(userFromDB.getPassword().equals(Hash.hash(passwordLoginTextField.getText()))) {
+                resetLabel();
+                client.closeEverything();
+
+                this.dispose();
+                try {
+                    new Home(new Client(new Socket(Const.HOST, Const.PORT), userFromDB))
+                            .setVisible(true);
+                } catch (IOException ex) {
+                    ex.printStackTrace();
                 }
+            } else {
+                JOptionPane.showMessageDialog(
+                    null, 
+                    "This password is wrong!", 
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE
+                );
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
         }
     }
+    
     
     private void openNextCard() {
         CardLayout cartLayout = (CardLayout) this.getContentPane().getLayout();
         cartLayout.next(this.getContentPane());
     }
 
+    
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -287,19 +279,24 @@ public class Auth extends javax.swing.JFrame {
                 JOptionPane.ERROR_MESSAGE
             );
         } else {
-            client.sendMessage(new Message("-2", new User(username, password)));
-            handleReceiveRegisterInfo(username, password);
+            client.sendMessage(new Message("RQ-REGISTER", new User(username, password)));
+            try {
+                Message message = (Message) client.getObjectInputStream().readObject();
+                if(message.getCode().equals("RP-REGISTER")) {
+                    handleReceiveRegisterResponse(message);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }//GEN-LAST:event_registerButtonActionPerformed
 
     private void loginButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginButton2ActionPerformed
-        CardLayout cartLayout = (CardLayout) this.getContentPane().getLayout();
-        cartLayout.next(this.getContentPane());
+        openNextCard();
     }//GEN-LAST:event_loginButton2ActionPerformed
 
     private void registerButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_registerButton2ActionPerformed
-        CardLayout cartLayout = (CardLayout) this.getContentPane().getLayout();
-        cartLayout.next(this.getContentPane());
+        openNextCard();
     }//GEN-LAST:event_registerButton2ActionPerformed
 
     private void loginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginButtonActionPerformed
@@ -314,8 +311,15 @@ public class Auth extends javax.swing.JFrame {
                 JOptionPane.ERROR_MESSAGE
             );
         } else {
-            client.sendMessage(new Message("-1", new User(username, password)));
-            handleReceiveLoginInfo(username, password);
+            client.sendMessage(new Message("RQ-LOGIN", new User(username, password)));
+            try {
+                Message message = (Message) client.getObjectInputStream().readObject();
+                if(message.getCode().equals("RP-LOGIN")) {
+                    handleReceiveLoginResponse(message);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }//GEN-LAST:event_loginButtonActionPerformed
     

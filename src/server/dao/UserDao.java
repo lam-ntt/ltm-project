@@ -18,7 +18,9 @@ import model.User;
 public class UserDao {
     
     public static void main(String[] args) {
-//        createUser(new User("minh", "123"));
+        User user = createUser(new User("14354", "123"));
+        
+        
     }
     
     public static User getUser(int id) {
@@ -122,7 +124,7 @@ public class UserDao {
     }
     
     
-    public static boolean createUser(User user) {
+    public static User createUser(User user) {
         try {
             Connection con = Connectionn.getConnection();
             Statement statement = con.createStatement();
@@ -132,13 +134,17 @@ public class UserDao {
             String query = "INSERT INTO USER(USERNAME, PASSWORD) " + 
                         "VALUES('" + user.getUsername() + "', '" + user.getPassword() + "')";
             
-            int result = statement.executeUpdate(query);
-            return (result > 0);
+            statement.executeUpdate(query, Statement.RETURN_GENERATED_KEYS);
+            ResultSet resultSet = statement.getGeneratedKeys();
+            
+            resultSet.next();
+            user = getUser(resultSet.getInt(1));
+            return user;
         } catch(SQLException ex) {
             ex.printStackTrace();
         }
         
-        return false;
+        return null;
     }
     
     public static boolean updateUser(User user, String state) {

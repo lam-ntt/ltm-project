@@ -52,13 +52,13 @@ public class Main extends javax.swing.JFrame {
                         try {
                             Message message = (Message) client.getObjectInputStream().readObject();
                             switch (message.getCode()) {
-                                case "12" -> handleReceiveReadyState(message);
-                                case "13" -> handleReceiveGame(message);
-                                case "15" -> handleReceiveRightClick(message);
-                                case "161" -> handleReceiveFailClick(message, 1);
-                                case "162" -> handleReceiveFailClick(message, 2);
-                                case "17" -> handleReceiveContinueRequest(message);
-                                case "18" -> handleReceiveStopRequest();
+                                case "RQ-READY" -> handleReceiveReadyState(message);
+                                case "RP-GAME" -> handleReceiveGame(message);
+                                case "RP-RIGHTCLICK" -> handleReceiveRightClick(message);
+                                case "RP-FAILCLICK1" -> handleReceiveFailClick(message, 1);
+                                case "RP-FALICLICK2" -> handleReceiveFailClick(message, 2);
+                                case "RP-CONTINUE" -> handleReceiveContinueRequest(message);
+                                case "RQ-STOP" -> handleReceiveStopRequest();
                                 default -> {
                                 }
                             }
@@ -73,10 +73,15 @@ public class Main extends javax.swing.JFrame {
         });
     }
     
+    
     private void initLabel() {
         clockLabel.setHorizontalAlignment(JLabel.CENTER);
         notiLabel.setHorizontalAlignment(JLabel.CENTER);
         messageLabel.setHorizontalAlignment(JLabel.CENTER);
+        
+        clockLabel.setText("");
+        notiLabel.setText("");
+        messageLabel.setText("");
         
         ruleDescTextArea.setText(Const.RULE);
         ruleDescTextArea.setOpaque(false);
@@ -109,10 +114,6 @@ public class Main extends javax.swing.JFrame {
     }
     
     private void setUpAtBeginning () {
-        clockLabel.setText("");
-        notiLabel.setText("");
-        messageLabel.setText("");
-        
         startButton.setEnabled(true);
         stopButton.setEnabled(false);
         scoreTable.setVisible(false);
@@ -137,16 +138,6 @@ public class Main extends javax.swing.JFrame {
         openNextCard();
     }
     
-    private void resetGame() {
-        initTable();
-        setUpAtBeginning();
-        openNextCard();
-    }
-    
-    
-    private void sendReadyState() {
-        client.sendMessage(new Message("12", parner));
-    }
     
     private void handleReceiveReadyState(Message message) {
         readyCount += 1;
@@ -162,55 +153,9 @@ public class Main extends javax.swing.JFrame {
     }
     
     
-    private void sendClick(Click click) {
-        client.sendMessage(new Message("14", click));
-    }
-    
-    private void handleReceiveRightClick(Message message) {
-        Click click = (Click) message.getObject();
-        String mes;
-        if(click.getUser().getUsername().equals(user.getUsername())) {
-            mes = "Correct point!";
-            if(game.getUser1().getUsername().equals(user.getUsername())) {
-                game.setScore1(game.getScore1() + 1);
-            } else {
-                game.setScore2(game.getScore2() + 1);
-            }
-        } else {
-            mes = click.getUser().getUsername() + " found one correct point!";
-            if(game.getUser1().getUsername().equals(parner.getUsername())) {
-                game.setScore1(game.getScore1() + 1);
-            } else {
-                game.setScore2(game.getScore2() + 1);
-            }
-        }
-        messageLabel.setText(mes);
-        
-        updateTable();
-        markPos(image1Label, "O", click.getX(), click.getY());
-        markPos(image2Label, "O", click.getX(), click.getY());
-
-        if(game.getScore1() + game.getScore2() == 5) endGame();
-    }
-    
-    private void handleReceiveFailClick(Message message, int error) {
-        Click click = (Click) message.getObject();
-        String mes;
-        if(click.getUser().getUsername().equals(user.getUsername())) {
-            mes = click.getUser().getUsername();
-            if(error == 1) mes += " clicked in incorrect point!";
-            else mes += " clicked in checked point!";
-            
-        } else {
-            if(error == 1) mes = "Incorrect point!";
-            else mes = "Checked point!";
-        }
-        messageLabel.setText(mes);
-    }
-    
-    
     private void endGame() {
-        client.sendMessage(new Message("19", game));
+        client.sendMessage(new Message("RQ-ENDGAME", game));
+        
         String msg;
         if(game.getUser1().getUsername().equals(user.getUsername())) {
             if(game.getScore1() > game.getScore2()) {
@@ -237,22 +182,64 @@ public class Main extends javax.swing.JFrame {
         );
         
         if(response == JOptionPane.YES_OPTION) {
-            sendContinueState();
+            client.sendMessage(new Message("RQ-CONTINUE", "Yes"));
         } else {
-            sendNotContinueState();
+            client.sendMessage(new Message("RQ-CONTINUE", "No"));
+            
             running = false;
             this.dispose();
             new Home(client).setVisible(true);
         }
     }
     
-    
-    private void sendContinueState() {
-        client.sendMessage(new Message("17", "Yes"));
+    private void handleReceiveRightClick(Message message) {
+        Click click = (Click) message.getObject();
+        String mes;
+        if(click.getUser().getUsername().equals(user.getUsername())) {
+            mes = "Correct point!";
+            if(game.getUser1().getUsername().equals(user.getUsername())) {
+                game.setScore1(game.getScore1() + 1);
+            } else {
+                game.setScore2(game.getScore2() + 1);
+            }
+        } else {
+            mes = click.getUser().getUsername() + " found one correct point!";
+            if(game.getUser1().getUsername().equals(parner.getUsername())) {
+                game.setScore1(game.getScore1() + 1);
+            } else {
+                game.setScore2(game.getScore2() + 1);
+            }
+        }
+        messageLabel.setText(mes);
+        updateTable();
+        markPos(image1Label, "O", click.getX(), click.getY());
+        markPos(image2Label, "O", click.getX(), click.getY());
+
+        if(game.getScore1() + game.getScore2() == 5) endGame();
     }
     
-    private void sendNotContinueState() {
-        client.sendMessage(new Message("17", "No"));
+    private void handleReceiveFailClick(Message message, int error) {
+        Click click = (Click) message.getObject();
+        String mes;
+        if(click.getUser().getUsername().equals(user.getUsername())) {
+            mes = click.getUser().getUsername();
+            if(error == 1) mes += " clicked in incorrect point!";
+            else mes += " clicked in checked point!";
+            
+        } else {
+            if(error == 1) mes = "Incorrect point!";
+            else mes = "Checked point!";
+        }
+        messageLabel.setText(mes);
+    }
+    
+    
+    
+    private void resetGame() {
+        initLabel();
+        initTable();
+        openNextCard();
+        setUpAtBeginning();
     }
     
     private void handleReceiveContinueRequest(Message message) {
@@ -278,10 +265,6 @@ public class Main extends javax.swing.JFrame {
     }
     
     
-    private void sendStopRequest() {
-        client.sendMessage(new Message("18"));
-    }
-    
     private void handleReceiveStopRequest() {
         JOptionPane.showMessageDialog(
                 this, 
@@ -299,7 +282,6 @@ public class Main extends javax.swing.JFrame {
             ex.printStackTrace();
         }
     }
-    
     
     
     private ImageIcon convertImage(String path) {
@@ -558,17 +540,19 @@ public class Main extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void image1LabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_image1LabelMouseClicked
-        sendClick(new Click(evt.getX(), evt.getY(), user, game));
+        System.out.println(evt.getX() + " " + evt.getY());
+        client.sendMessage(new Message("RQ-CLICK", new Click(evt.getX(), evt.getY(), user, game)));
     }//GEN-LAST:event_image1LabelMouseClicked
 
     private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
         startButton.setEnabled(false);
         readyCount += 1;
-        sendReadyState();
+        
+        client.sendMessage(new Message("RQ-READY", parner));
     }//GEN-LAST:event_startButtonActionPerformed
 
     private void image2LabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_image2LabelMouseClicked
-        sendClick(new Click(evt.getX(), evt.getY(), user, game));
+        client.sendMessage(new Message("RQ-CLICK", new Click(evt.getX(), evt.getY(), user, game)));
     }//GEN-LAST:event_image2LabelMouseClicked
 
     private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionPerformed
@@ -580,7 +564,7 @@ public class Main extends javax.swing.JFrame {
         );
         
         if(response == JOptionPane.YES_OPTION) {
-            sendStopRequest();
+            client.sendMessage(new Message("RQ-STOP"));
         
             running = false;
             client.closeEverything();

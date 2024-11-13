@@ -43,7 +43,7 @@ public class Home extends javax.swing.JFrame {
             @Override
             public void windowClosing(WindowEvent e) {
                 running = false;
-                requestRemoveUser();
+                client.sendMessage(new Message("RQ-REMOVE"));
                 client.closeEverything();
             }
         });
@@ -51,9 +51,9 @@ public class Home extends javax.swing.JFrame {
         initLabel();
         initTable();
         
-        requestGetUserInfo();
-        requestGetAllUserInfo();
-        requestGetAllOnlineUserInfo();
+        client.sendMessage(new Message("RQ-USER"));
+        client.sendMessage(new Message("RQ-USERS"));
+        client.sendMessage(new Message("RQ-ONLINE"));
     }
     
     public Thread initThread() {
@@ -67,15 +67,15 @@ public class Home extends javax.swing.JFrame {
                         try {
                             Message message = (Message) client.getObjectInputStream().readObject();
                             switch (message.getCode()) {
-                                case "01" -> handleGetUserInfoResponse(message);
-                                case "1" -> handleGetAllUserInfoResponse(message);
-                                case "2" -> handleGetAllOnlineUserInfoResponse(message);
-                                case "3" -> handleAddUserToOnlineUserRequest(message);
-                                case "4" -> handleRemoveUserFromOnlineUserRequest(message);
-                                case "6" -> handleReceiveInvitationRequest(message);
-                                case "9" -> handleReceiveAgreementResponse(message);
-                                case "10" -> handleReceiveRejectionResponse(message);
-                                case "11" -> handleReceiveBusyResponse(message);
+                                case "RP-USER" -> handleGetUserResponse(message);
+                                case "RP-USERS" -> handleGetAllUsersResponse(message);
+                                case "RP-ONLINE" -> handleGetAllOnlineUsersResponse(message);
+                                case "RQ-ADD" -> handleAddUserToOnlineUsersRequest(message);
+                                case "RQ-REMOVE" -> handleRemoveUserFromOnlineUsersRequest(message);
+                                case "RQ-INVITE" -> handleReceiveInvitationRequest(message);
+                                case "RP-AGREE" -> handleReceiveAgreementResponse(message);
+                                case "RP-REJECT" -> handleReceiveRejectionResponse(message);
+                                case "RP-BUSY" -> handleReceiveBusyResponse(message);
                                 default -> {
                                 }
                             }
@@ -89,6 +89,7 @@ public class Home extends javax.swing.JFrame {
             }
         });
     }
+    
     
     private void initLabel() {
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -113,6 +114,7 @@ public class Home extends javax.swing.JFrame {
     
     private void updateTable(List<User> users) {
         leaderBoardTable.setModel(defaultTableModel);
+        defaultTableModel.setRowCount(0);
         for(User user: users) {
             defaultTableModel.addRow(new Object[] {
                 user.getUsername(),
@@ -139,7 +141,15 @@ public class Home extends javax.swing.JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
-                    requestInviteUser(user);
+                    
+                    User receiver = user;
+                    client.sendMessage(new Message("RQ-INVITE", receiver));
+                    JOptionPane.showMessageDialog(
+                        mainPanel, 
+                        "Sending your invitation to " + receiver.getUsername(), 
+                        "Notification", 
+                        JOptionPane.INFORMATION_MESSAGE
+                    );
                 }
             }
         });
@@ -159,41 +169,25 @@ public class Home extends javax.swing.JFrame {
     }
     
     
-    private void requestGetUserInfo() {
-        client.sendMessage(new Message("01"));
-    }
-    
-    private void requestGetAllUserInfo() {
-        client.sendMessage(new Message("1"));
-    }
-    
-    private void requestGetAllOnlineUserInfo() {
-        client.sendMessage(new Message("2"));
-    }
-    
-    private void handleGetUserInfoResponse(Message message) {
+    private void handleGetUserResponse(Message message) {
         User user = (User) message.getObject();
         this.user = user;
         
         updateInfo();
     }
     
-    private void handleGetAllUserInfoResponse(Message message) {
+    private void handleGetAllUsersResponse(Message message) {
         List<User> users = (List<User>) message.getObject();
         updateTable(users);
     }
     
-    private void handleGetAllOnlineUserInfoResponse(Message message) {
+    private void handleGetAllOnlineUsersResponse(Message message) {
         List<User> users = (List<User>) message.getObject();
         updateList(users);
     }
     
     
-    private void requestRemoveUser() {
-        client.sendMessage(new Message("4"));
-    }
-    
-    private void handleRemoveUserFromOnlineUserRequest(Message message) {
+    private void handleRemoveUserFromOnlineUsersRequest(Message message) {
         User user = (User) message.getObject();
         SwingUtilities.invokeLater(() -> {
             jPanel5.remove(findLabel(user, jPanel5));
@@ -201,7 +195,7 @@ public class Home extends javax.swing.JFrame {
         });
 }
     
-    private void handleAddUserToOnlineUserRequest(Message message) {
+    private void handleAddUserToOnlineUsersRequest(Message message) {
         User user = (User) message.getObject();
         SwingUtilities.invokeLater(() -> {
             jPanel5.add(createLabel(user));
@@ -209,24 +203,6 @@ public class Home extends javax.swing.JFrame {
         });
     }
     
-    
-    private void requestInviteUser(User receiver) {
-        client.sendMessage(new Message("5", receiver));
-        JOptionPane.showMessageDialog(
-            mainPanel, 
-            "Sending your invitation to " + receiver.getUsername(), 
-            "Notification", 
-            JOptionPane.INFORMATION_MESSAGE
-        );
-    }
-    
-    private void sendAgreeResponse(User receiver) {
-        client.sendMessage(new Message("7", receiver));
-    }
-    
-    private void sendRejectResponse(User receiver) {
-        client.sendMessage(new Message("8", receiver));
-    }
         
     private void handleReceiveInvitationRequest(Message message) {
         User sender = (User) message.getObject();
@@ -238,13 +214,13 @@ public class Home extends javax.swing.JFrame {
         );
 
         if(response == JOptionPane.YES_OPTION) {
-            sendAgreeResponse(sender);
+            client.sendMessage(new Message("RP-AGREE", sender));
             
             running = false;
             this.dispose();
             new Main(client, sender).setVisible(true);
         } else {
-            sendRejectResponse(sender);
+            client.sendMessage(new Message("RP-REJECT", sender));
         }
     }
     
@@ -277,7 +253,7 @@ public class Home extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(
             mainPanel, 
             sender.getUsername() + " is on another game!", 
-            "Confirmation", 
+            "Notification", 
             JOptionPane.INFORMATION_MESSAGE
         );
     }
@@ -492,7 +468,7 @@ public class Home extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void logoutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logoutButtonActionPerformed
-        requestRemoveUser();
+        client.sendMessage(new Message("RQ-REMOVE"));
         client.closeEverything();
         
         this.dispose();
