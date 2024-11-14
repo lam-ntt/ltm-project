@@ -226,6 +226,10 @@ public class ClientHandler implements Runnable{
             setUpRandomGame();
             sendMessage(new Message("RP-GAME", game));
             clientParner.sendMessage(new Message("RP-GAME", game));
+            
+            Timer timer = new Timer(new GroupHandler(this, clientParner));
+            Thread count = new Thread(timer);
+            count.start();
         } else {
             clientParner.sendMessage(new Message("RQ-READY", user));
         }
@@ -236,6 +240,11 @@ public class ClientHandler implements Runnable{
         int check = checkClick(click);
         if(check == 1) {
             ClickDao.createClick(click);
+            if(game.getUser1().getUsername().equals(click.getUser().getUsername())) {
+                game.setScore1(game.getScore1() + 1);
+            } else {
+                game.setScore2(game.getScore2() + 1);
+            }
             sendMessage(new Message("RP-RIGHTCLICK", click));
             clientParner.sendMessage(new Message("RP-RIGHTCLICK", click));
         } else {
@@ -251,16 +260,7 @@ public class ClientHandler implements Runnable{
     }
     
     private void handleEndGame(Message message) {
-        Game updatedGame = (Game) message.getObject();
         if(setResult == false) {
-            if(this.game.getUser1().getUsername().equals(updatedGame.getUser1().getUsername())) {
-                this.game.setScore1(updatedGame.getScore1());
-                this.game.setScore2(updatedGame.getScore2());
-            } else {
-                this.game.setScore1(updatedGame.getScore2());
-                this.game.setScore2(updatedGame.getScore1());
-            }
-            
             if(this.game.getScore1() > this.game.getScore2()) {
                 this.game.setState(1);
                 UserDao.updateUser(this.game.getUser1(), "win");
@@ -406,10 +406,21 @@ public class ClientHandler implements Runnable{
         clientHandlers.remove(this);
     }
     
+    public void removeGroupHandler() {
+        for(GroupHandler groupHandler: groupHandlers) {
+            if(groupHandler.clientHandler1.getClientUsername().equals(this.getClientUsername())||
+                    groupHandler.clientHandler2.getClientUsername().equals(this.getClientUsername())) {
+                groupHandlers.remove(groupHandler);
+                break;
+            }
+        }
+    }
+    
     public void closeEverything() {
         try {
             if(user != null) {
                 transferRemoveUserFromOnlineUsersRequest();
+                removeGroupHandler();
                 removeClientHandler();
                 running = false;
             }

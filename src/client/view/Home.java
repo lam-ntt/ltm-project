@@ -7,18 +7,18 @@ package client.view;
 import client.Client;
 import helper.Message;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
-import java.net.SocketException;
 import java.util.List;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import model.User;
 
@@ -103,6 +103,18 @@ public class Home extends javax.swing.JFrame {
         defaultTableModel.addColumn("WIN");
         defaultTableModel.addColumn("TIE");
         defaultTableModel.addColumn("LOSE");
+        
+        leaderBoardTable.setModel(defaultTableModel);
+        
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        
+        // Áp dụng căn giữa cho từng cột
+        for (int i = 0; i < leaderBoardTable.getColumnCount(); i++) {
+            leaderBoardTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+        
+        leaderBoardTable.setRowHeight(30);
     }
     
     private void updateInfo() {
@@ -113,7 +125,6 @@ public class Home extends javax.swing.JFrame {
     }
     
     private void updateTable(List<User> users) {
-        leaderBoardTable.setModel(defaultTableModel);
         defaultTableModel.setRowCount(0);
         for(User user: users) {
             defaultTableModel.addRow(new Object[] {
@@ -137,6 +148,8 @@ public class Home extends javax.swing.JFrame {
     
     private JLabel createLabel(User user) {
         JLabel label = new JLabel(user.getUsername(), SwingConstants.CENTER);
+        label.setFont(label.getFont().deriveFont(18f));
+        label.setFont(label.getFont().deriveFont(Font.PLAIN));
         label.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -285,6 +298,7 @@ public class Home extends javax.swing.JFrame {
         titleLabel.setFont(new java.awt.Font("Segoe UI", 1, 30)); // NOI18N
         titleLabel.setText("Spot the Difference");
 
+        logoutButton.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         logoutButton.setText("Logout");
         logoutButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -297,27 +311,28 @@ public class Home extends javax.swing.JFrame {
         headerPanelLayout.setHorizontalGroup(
             headerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(headerPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(titleLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 387, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 91, Short.MAX_VALUE)
+                .addContainerGap(468, Short.MAX_VALUE)
                 .addComponent(logoutButton)
                 .addContainerGap())
+            .addGroup(headerPanelLayout.createSequentialGroup()
+                .addGap(58, 58, 58)
+                .addComponent(titleLabel)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         headerPanelLayout.setVerticalGroup(
             headerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(headerPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(logoutButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, headerPanelLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(titleLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(23, 23, 23))
+                .addGap(24, 24, 24))
         );
 
-        leaderBoardLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        leaderBoardLabel.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
         leaderBoardLabel.setText("Leader Board");
 
+        leaderBoardTable.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
         leaderBoardTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
@@ -335,10 +350,25 @@ public class Home extends javax.swing.JFrame {
             new String [] {
                 "User", "Win", "Tie", "Lose"
             }
-        ));
-        jScrollPane1.setViewportView(leaderBoardTable);
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false
+            };
 
-        onlineUsersLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        leaderBoardTable.getTableHeader().setReorderingAllowed(false);
+        jScrollPane1.setViewportView(leaderBoardTable);
+        if (leaderBoardTable.getColumnModel().getColumnCount() > 0) {
+            leaderBoardTable.getColumnModel().getColumn(0).setResizable(false);
+            leaderBoardTable.getColumnModel().getColumn(1).setResizable(false);
+            leaderBoardTable.getColumnModel().getColumn(2).setResizable(false);
+            leaderBoardTable.getColumnModel().getColumn(3).setResizable(false);
+        }
+
+        onlineUsersLabel.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
         onlineUsersLabel.setText("Online Users (double-click on the username to invite them to the game)");
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
@@ -360,7 +390,7 @@ public class Home extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(onlineUsersLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 699, Short.MAX_VALUE))
+                    .addComponent(onlineUsersLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -397,18 +427,22 @@ public class Home extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(leaderBoardLabel)
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 219, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        usernameLabel.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         usernameLabel.setText("Username: A");
 
+        winLabel.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         winLabel.setText("Win: 0");
 
+        loseLabel.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         loseLabel.setText("Lose: 0");
 
+        tieLabel.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         tieLabel.setText("Tie: 0");
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
@@ -442,11 +476,11 @@ public class Home extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(mainPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
                         .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(headerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))

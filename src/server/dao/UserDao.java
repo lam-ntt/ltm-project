@@ -162,7 +162,6 @@ public class UserDao {
             } else {
                 query = "UPDATE USER SET TIE = " + (user.getTie()+ 1) +
                         " WHERE ID = " + user.getId();
-                query = "";
             }
             
             int result = statement.executeUpdate(query);
